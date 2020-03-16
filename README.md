@@ -1,1 +1,1 @@
-# Naveego Plugin for Oracle Autonomous Data Warehouse
+# Naveego Plugin for IBM DB2
