@@ -10,12 +10,13 @@
   "kind": "publisher",
   "os": "$GOOS",
   "arch": "$GOARCH",
+  "accessGroups": ["vandelay", "demo"],
   "canProduceMultipleSchemas": true,
   "canAcceptQueryBasedSchemas": false,
   "canUseOAuth": false,
   "canWrite": false,
-  "canConfigureReplication": true,
-  "canWriteReplication": true,
+  "canConfigureReplication": false,
+  "canWriteReplication": false,
   "querySchema": {
     "ui": {
       "ui:widget": "code",
@@ -31,8 +32,8 @@
     "ui": {
       "ui:order": [
         "Server",
-        "Database",
         "Port",
+        "Database",
         "Username",
         "Password"
       ],
@@ -45,13 +46,13 @@
       "properties": {
         "Hostname" : {
           "type": "string",
-          "title": "Hostname",
-          "description": "The hostname of the MySQL Server"
+          "title": "Server",
+          "description": "The Server hostname or IP of the DB2 Server"
         },
         "Port": {
-          "type": "string",
+          "type": "integer",
           "title": "Port",
-          "description": "The port of the MySQL Server"
+          "description": "The port of the DB2 Server"
         },
         "Username": {
           "type": "string",
@@ -66,10 +67,11 @@
         "Database": {
           "type": "string",
           "title": "Database",
-          "description": "The Database within the MySQL Server"
+          "description": "The Database within the DB2 instance"
         }
       },
       "required": [
+        "Server",
         "Hostname",
         "Username",
         "Password",

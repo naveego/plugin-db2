@@ -17,10 +17,10 @@ namespace PluginDb2.Plugin
         {
             return new Settings
             {
-                Server = "150.136.152.223",
-                Database = "TESTDB",
-                Username = "DB2INST1",
-                Password = "test123"
+                Server = "",
+                Database = "",
+                Username = "",
+                Password = ""
             };
         }
 
