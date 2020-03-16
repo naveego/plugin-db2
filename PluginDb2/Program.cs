@@ -18,6 +18,11 @@ namespace PluginDb2
                 {
                     Logger.Error($"died: {eventArgs.ExceptionObject}");
                 };
+                
+                // Add the DB Driver to the PATH
+                var currentPath = Environment.GetEnvironmentVariable("PATH");
+                var binPath = System.IO.Path.Join(System.Environment.CurrentDirectory, "clidriver", "bin");
+                Environment.SetEnvironmentVariable("PATH", currentPath + ":" + binPath);
 
                 // clean old logs on start up
                 Logger.Clean();

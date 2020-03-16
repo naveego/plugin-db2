@@ -28,7 +28,7 @@ namespace PluginDb2.API.Discover
                 // add column to refreshProperties
                 var property = new Property
                 {
-                    Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName).ToString(), '`'),
+                    Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName).ToString(), '"'),
                     Name = reader.GetValueById(ColumnName).ToString(),
                     IsKey = reader.GetValueById(ColumnKey).ToString() == "1",
                     IsNullable = reader.GetValueById(IsNullable).ToString() == "Y",
@@ -80,7 +80,7 @@ namespace PluginDb2.API.Discover
             }
         }
 
-        private static DecomposeResponse TrimEscape(this DecomposeResponse response, char escape = '`')
+        private static DecomposeResponse TrimEscape(this DecomposeResponse response, char escape = '"')
         {
             response.Database = response.Database.Trim(escape);
             response.Schema = response.Schema.Trim(escape);
