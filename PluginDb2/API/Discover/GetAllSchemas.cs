@@ -15,26 +15,42 @@ namespace PluginDb2.API.Discover
         private const string TableType = "TABLE_TYPE";
         private const string ColumnName = "COLUMN_NAME";
         private const string DataType = "DATA_TYPE";
-        private const string ColumnKey = "COLUMN_KEY";
-        private const string IsNullable = "IS_NULLABLE";
-        private const string CharacterMaxLength = "CHARACTER_MAXIMUM_LENGTH";
+        private const string ColumnKey = "IS_KEY";
+        private const string IsNullable = "ALLOW_NULLS";
+        private const string CharacterMaxLength = "MAX_CHAR_LENGTH";
 
-        private const string GetAllTablesAndColumnsQuery = @"
-SELECT t.TABLE_NAME
-     , t.TABLE_SCHEMA
-     , t.TABLE_TYPE
-     , c.COLUMN_NAME
-     , c.DATA_TYPE
-     , c.COLUMN_KEY
-     , c.IS_NULLABLE
-     , c.CHARACTER_MAXIMUM_LENGTH
+        private const string GetAllTablesAndColumnsQuery = @"SELECT * FROM
+(
+SELECT 
+t.NAME AS TABLE_NAME,
+t.CREATOR AS TABLE_SCHEMA,
+'T' AS TABLE_TYPE,
+c.NAME as COLUMN_NAME,
+c.COLTYPE AS DATA_TYPE,
+c.NULLS as ALLOW_NULLS,
+c.LENGTH as MAX_CHAR_LENGTH,
+c.KEYSEQ AS IS_KEY
+FROM 
+SYSIBM.SYSTABLES T
+INNER JOIN SYSIBM.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR)
+WHERE t.TYPE = 'T' and tbspace NOT IN ('SYSCATSPACE', 'SYSTOOLSPACE')
 
-FROM INFORMATION_SCHEMA.TABLES AS t
-      INNER JOIN INFORMATION_SCHEMA.COLUMNS AS c ON c.TABLE_SCHEMA = t.TABLE_SCHEMA AND c.TABLE_NAME = t.TABLE_NAME
+UNION ALL
 
-WHERE t.TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')
-
-ORDER BY t.TABLE_NAME";
+SELECT 
+t.NAME AS TABLE_NAME,
+t.CREATOR AS TABLE_SCHEMA,
+'V' AS TABLE_TYPE,
+c.NAME as COLUMN_NAME,
+c.COLTYPE AS DATA_TYPE,
+c.NULLS as ALLOW_NULLS,
+c.LENGTH as MAX_CHAR_LENGTH,
+c.KEYSEQ AS IS_KEY
+FROM 
+SYSIBM.SYSVIEWS T
+INNER JOIN SYSIBM.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR) AND t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT')
+) as c
+ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
 
         public static async IAsyncEnumerable<Schema> GetAllSchemas(IConnectionFactory connFactory, int sampleSize = 5)
         {
@@ -49,7 +65,7 @@ ORDER BY t.TABLE_NAME";
             while (await reader.ReadAsync())
             {
                 var schemaId =
-                    $"{Utility.Utility.GetSafeName(reader.GetValueById(TableSchema).ToString(), '`')}.{Utility.Utility.GetSafeName(reader.GetValueById(TableName).ToString(), '`')}";
+                    $"{Utility.Utility.GetSafeName(reader.GetValueById(TableSchema).ToString(), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(TableName).ToString(), '"')}";
                 if (schemaId != currentSchemaId)
                 {
                     // return previous schema
@@ -74,10 +90,10 @@ ORDER BY t.TABLE_NAME";
                 // add column to schema
                 var property = new Property
                 {
-                    Id = $"`{reader.GetValueById(ColumnName)}`",
+                    Id = $"{reader.GetValueById(ColumnName)}",
                     Name = reader.GetValueById(ColumnName).ToString(),
-                    IsKey = reader.GetValueById(ColumnKey).ToString() == "PRI",
-                    IsNullable = reader.GetValueById(IsNullable).ToString() == "YES",
+                    IsKey = reader.GetValueById(ColumnKey).ToString() == "1",
+                    IsNullable = reader.GetValueById(IsNullable).ToString() == "Y",
                     Type = GetType(reader.GetValueById(DataType).ToString()),
                     TypeAtSource = GetTypeAtSource(reader.GetValueById(DataType).ToString(),
                         reader.GetValueById(CharacterMaxLength))
@@ -107,7 +123,7 @@ ORDER BY t.TABLE_NAME";
 
         private static PropertyType GetType(string dataType)
         {
-            switch (dataType)
+            switch (dataType.ToLower().Trim())
             {
                 case "datetime":
                 case "timestamp":
@@ -119,10 +135,10 @@ ORDER BY t.TABLE_NAME";
                 case "tinyint":
                 case "smallint":
                 case "mediumint":
+                case "bigint":
                 case "int":
                     return PropertyType.Integer;
                 case "decimal":
-                case "bigint":
                     return PropertyType.Decimal;
                 case "float":
                 case "double":

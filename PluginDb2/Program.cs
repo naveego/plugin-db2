@@ -22,16 +22,7 @@ namespace PluginDb2
                 // clean old logs on start up
                 Logger.Clean();
 
-                var driverPath = Environment.GetEnvironmentVariable("DB2_CLI_DRIVER_INSTALL_PATH");
-                var ldPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH");
-                var path = Environment.GetEnvironmentVariable("PATH");
-                var conn = new DB2Connection("SERVER=;DATABASE=;UID=;PWD=");
-                conn.Open();
-                var stop = "";
                 
-                
-
-                /*
                 // create new server and start it
                 Server server = new Server
                 {
@@ -55,7 +46,6 @@ namespace PluginDb2
 
                 // shutdown server
                 server.ShutdownAsync().Wait();
-                */
             }
             catch (Exception e)
             {

@@ -49,10 +49,10 @@ namespace PluginDb2.API.Read
                                 case PropertyType.String:
                                 case PropertyType.Text:
                                 case PropertyType.Decimal:
-                                    recordMap[property.Id] = reader.GetValueById(property.Id, '`').ToString();
+                                    recordMap[property.Id] = reader.GetValueById(property.Id, '"').ToString();
                                     break;
                                 default:
-                                    recordMap[property.Id] = reader.GetValueById(property.Id, '`');
+                                    recordMap[property.Id] = reader.GetValueById(property.Id, '"');
                                     break;
                             }
                         }

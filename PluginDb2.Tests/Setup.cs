@@ -11,17 +11,12 @@ namespace PluginDb2
             if (_environmentSet) return;
 
             var homePath = Environment.ExpandEnvironmentVariables("%HOME%");
-            var packagePath = $"{homePath}/.nuget/packages/ibm.data.db2.core-osx/1.3.0.100";
+            var packagePath = $"{homePath}/.nuget/packages/ibm.data.db2.core/1.3.0.100";
             var driverPath = $"{packagePath}/build/clidriver";
-            var libPath = $"{driverPath}/lib";
             var binPath = $"{driverPath}/bin";
             
-            // 
-            //Environment.SetEnvironmentVariable("DB2_CLI_DRIVER_INSTALL_PATH", driverPath);
-            //Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", $"{libPath}:{libPath}/icc");
-
             var currentPath = Environment.GetEnvironmentVariable("PATH");
-            //Environment.SetEnvironmentVariable("PATH", $"{binPath}:{currentPath}");
+            Environment.SetEnvironmentVariable("PATH", $"{binPath}:{currentPath}");
         }
     }
 }

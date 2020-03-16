@@ -30,8 +30,8 @@ namespace PluginDb2.API.Discover
                 {
                     Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName).ToString(), '`'),
                     Name = reader.GetValueById(ColumnName).ToString(),
-                    IsKey = reader.GetValueById(ColumnKey).ToString() == "PRI",
-                    IsNullable = reader.GetValueById(IsNullable).ToString() == "YES",
+                    IsKey = reader.GetValueById(ColumnKey).ToString() == "1",
+                    IsNullable = reader.GetValueById(IsNullable).ToString() == "Y",
                     Type = GetType(reader.GetValueById(DataType).ToString()),
                     TypeAtSource = GetTypeAtSource(reader.GetValueById(DataType).ToString(),
                         reader.GetValueById(CharacterMaxLength))
