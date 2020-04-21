@@ -8,7 +8,20 @@ namespace PluginDb2.API.Discover
 {
     public static partial class Discover
     {
-        private const string GetTableAndColumnsQuery = @"";
+        private const string GetTableAndColumnsQuery = @"
+SELECT 
+t.NAME AS TABLE_NAME,
+t.CREATOR AS TABLE_SCHEMA,
+'T' AS TABLE_TYPE,
+c.NAME as COLUMN_NAME,
+c.COLTYPE AS DATA_TYPE,
+c.NULLS as ALLOW_NULLS,
+c.LENGTH as MAX_CHAR_LENGTH,
+c.KEYSEQ AS IS_KEY
+FROM 
+SYSIBM.SYSTABLES T
+INNER JOIN SYSIBM.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR)
+WHERE t.TYPE = 'T' and t.CREATOR = '{0}' and t.NAME = '{1}'";
 
         public static async Task<Schema> GetRefreshSchemaForTable(IConnectionFactory connFactory, Schema schema,
             int sampleSize = 5)
