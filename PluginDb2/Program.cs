@@ -16,7 +16,7 @@ namespace PluginDb2
                 // Add final chance exception handler
                 AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) =>
                 {
-                    Logger.Error($"died: {eventArgs.ExceptionObject}");
+                    Logger.Error(null, $"died: {eventArgs.ExceptionObject}");
                 };
                 
                 // Add the DB Driver to the PATH
@@ -54,7 +54,7 @@ namespace PluginDb2
             }
             catch (Exception e)
             {
-                Logger.Error(e.Message);
+                Logger.Error(e, e.Message);
             }
         }
     }
