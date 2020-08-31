@@ -42,7 +42,7 @@ namespace PluginDb2.API.Replication
                 case PropertyType.Time:
                     return "varchar(255)";
                 case PropertyType.Integer:
-                    return "int";
+                    return "integer";
                 case PropertyType.Decimal:
                     return "decimal";
                 case PropertyType.Float:
@@ -50,13 +50,13 @@ namespace PluginDb2.API.Replication
                 case PropertyType.Bool:
                     return "boolean";
                 case PropertyType.Blob:
-                    return "longblob";
+                    return "blob";
                 case PropertyType.String:
                     return "varchar(255)";
                 case PropertyType.Text:
-                    return "longtext";
+                    return "clob";
                 default:
-                    return "longtext";
+                    return "clob";
             }
         }
     }

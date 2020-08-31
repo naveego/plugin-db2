@@ -43,8 +43,8 @@ WHERE {Constants.ReplicationMetaDataJobId} = '{{6}}'";
                 // try to insert
                 var cmd = connFactory.GetCommand(
                     string.Format(InsertMetaDataQuery, 
-                        Utility.Utility.GetSafeName(table.SchemaName, '`'),
-                        Utility.Utility.GetSafeName(table.TableName, '`'), 
+                        Utility.Utility.GetSafeName(table.SchemaName, '"'),
+                        Utility.Utility.GetSafeName(table.TableName, '"'), 
                         metaData.Request.DataVersions.JobId,
                         JsonConvert.SerializeObject(metaData.Request).Replace("\\", "\\\\"),
                         metaData.ReplicatedShapeId,
@@ -62,8 +62,8 @@ WHERE {Constants.ReplicationMetaDataJobId} = '{{6}}'";
                     // update if it failed
                     var cmd = connFactory.GetCommand(
                         string.Format(UpdateMetaDataQuery, 
-                            Utility.Utility.GetSafeName(table.SchemaName, '`'),
-                            Utility.Utility.GetSafeName(table.TableName, '`'),
+                            Utility.Utility.GetSafeName(table.SchemaName, '"'),
+                            Utility.Utility.GetSafeName(table.TableName, '"'),
                             JsonConvert.SerializeObject(metaData.Request).Replace("\\", "\\\\"),
                             metaData.ReplicatedShapeId,
                             metaData.ReplicatedShapeName,

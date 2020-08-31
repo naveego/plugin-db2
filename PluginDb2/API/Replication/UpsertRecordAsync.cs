@@ -23,10 +23,10 @@ namespace PluginDb2.API.Replication
                 // try to insert
                 var querySb =
                     new StringBuilder(
-                        $"INSERT INTO {Utility.Utility.GetSafeName(table.SchemaName, '`')}.{Utility.Utility.GetSafeName(table.TableName, '`')}(");
+                        $"INSERT INTO {Utility.Utility.GetSafeName(table.SchemaName, '"')}.{Utility.Utility.GetSafeName(table.TableName, '"')}(");
                 foreach (var column in table.Columns)
                 {
-                    querySb.Append($"{Utility.Utility.GetSafeName(column.ColumnName, '`')},");
+                    querySb.Append($"{Utility.Utility.GetSafeName(column.ColumnName, '"')},");
                 }
 
                 querySb.Length--;
@@ -70,7 +70,7 @@ namespace PluginDb2.API.Replication
                     // update if it failed
                     var querySb =
                         new StringBuilder(
-                            $"UPDATE {Utility.Utility.GetSafeName(table.SchemaName, '`')}.{Utility.Utility.GetSafeName(table.TableName, '`')} SET ");
+                            $"UPDATE {Utility.Utility.GetSafeName(table.SchemaName, '"')}.{Utility.Utility.GetSafeName(table.TableName, '"')} SET ");
                     foreach (var column in table.Columns)
                     {
                         if (!column.PrimaryKey)
@@ -86,16 +86,16 @@ namespace PluginDb2.API.Replication
                                 if (rawValue != null)
                                 {
                                     querySb.Append(
-                                        $"{Utility.Utility.GetSafeName(column.ColumnName, '`')}='{Utility.Utility.GetSafeString(rawValue.ToString(), "'", "''")}',");
+                                        $"{Utility.Utility.GetSafeName(column.ColumnName, '"')}='{Utility.Utility.GetSafeString(rawValue.ToString(), "'", "''")}',");
                                 }
                                 else
                                 {
-                                    querySb.Append($"{Utility.Utility.GetSafeName(column.ColumnName, '`')}=NULL,");
+                                    querySb.Append($"{Utility.Utility.GetSafeName(column.ColumnName, '"')}=NULL,");
                                 }
                             }
                             else
                             {
-                                querySb.Append($"{Utility.Utility.GetSafeName(column.ColumnName, '`')}=NULL,");
+                                querySb.Append($"{Utility.Utility.GetSafeName(column.ColumnName, '"')}=NULL,");
                             }
                         }
                     }

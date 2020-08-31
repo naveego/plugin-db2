@@ -18,7 +18,7 @@ namespace PluginDb2.API.Replication
             goldenTable.Columns.Add(new ReplicationColumn
             {
                 ColumnName = Constants.ReplicationVersionIds,
-                DataType = "longtext",
+                DataType = "clob",
                 PrimaryKey = false,
                 Serialize = true
             });

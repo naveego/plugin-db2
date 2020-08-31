@@ -20,9 +20,9 @@ WHERE {2} = '{3}'";
             await conn.OpenAsync();
 
             var cmd = connFactory.GetCommand(string.Format(GetRecordQuery,
-                    Utility.Utility.GetSafeName(table.SchemaName, '`'),
-                    Utility.Utility.GetSafeName(table.TableName, '`'),
-                    Utility.Utility.GetSafeName(table.Columns.Find(c => c.PrimaryKey == true).ColumnName, '`'),
+                    Utility.Utility.GetSafeName(table.SchemaName, '"'),
+                    Utility.Utility.GetSafeName(table.TableName, '"'),
+                    Utility.Utility.GetSafeName(table.Columns.Find(c => c.PrimaryKey == true).ColumnName, '"'),
                     primaryKeyValue
                 ),
                 conn);
@@ -41,7 +41,7 @@ WHERE {2} = '{3}'";
                 {
                     try
                     {
-                        recordMap[column.ColumnName] = reader.GetValueById(column.ColumnName, '`');
+                        recordMap[column.ColumnName] = reader.GetValueById(column.ColumnName, '"');
                     }
                     catch (Exception e)
                     {

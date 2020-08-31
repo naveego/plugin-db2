@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using System.Threading.Tasks;
 using PluginDb2.API.Factory;
@@ -9,9 +10,9 @@ namespace PluginDb2.API.Replication
     public static partial class Replication
     {
         private static readonly string EnsureTableQuery = @"SELECT COUNT(*) as c
-FROM information_schema.tables 
-WHERE table_schema = '{0}' 
-AND table_name = '{1}'";
+FROM SYSIBM.SYSTABLES T
+WHERE T.CREATOR = '{0}'
+AND T.NAME = '{1}'";
         
         // private static readonly string EnsureTableQuery = @"SELECT * FROM {0}.{1}";
 
@@ -21,9 +22,17 @@ AND table_name = '{1}'";
             await conn.OpenAsync();
             
             Logger.Info($"Creating Schema... {table.SchemaName}");
-            var cmd = connFactory.GetCommand($"CREATE SCHEMA IF NOT EXISTS {table.SchemaName}", conn);
-            await cmd.ExecuteNonQueryAsync();
+            var cmd = connFactory.GetCommand($"CREATE SCHEMA {table.SchemaName}", conn);
 
+            try
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, e.Message);
+            }
+            
             cmd = connFactory.GetCommand(string.Format(EnsureTableQuery, table.SchemaName, table.TableName), conn);
             
             Logger.Info($"Creating Table: {string.Format(EnsureTableQuery, table.SchemaName, table.TableName)}");
@@ -37,8 +46,8 @@ AND table_name = '{1}'";
             if (count == 0)
             {
                 // create table
-                var querySb = new StringBuilder($@"CREATE TABLE IF NOT EXISTS 
-{Utility.Utility.GetSafeName(table.SchemaName, '`')}.{Utility.Utility.GetSafeName(table.TableName, '`')}(");
+                var querySb = new StringBuilder($@"CREATE TABLE
+{Utility.Utility.GetSafeName(table.SchemaName, '"')}.{Utility.Utility.GetSafeName(table.TableName, '"')}(");
                 var primaryKeySb = new StringBuilder("PRIMARY KEY (");
                 var hasPrimaryKey = false;
                 foreach (var column in table.Columns)
