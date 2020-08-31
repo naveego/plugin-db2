@@ -26,9 +26,6 @@ WHERE t.TYPE = 'T' and t.CREATOR = '{0}' and t.NAME = '{1}'";
         public static async Task<Schema> GetRefreshSchemaForTable(IConnectionFactory connFactory, Schema schema,
             int sampleSize = 5)
         {
-
-            // TODO: Fix this
-            return schema;
             var decomposed = DecomposeSafeName(schema.Id).TrimEscape();
             var conn = connFactory.GetConnection();
 

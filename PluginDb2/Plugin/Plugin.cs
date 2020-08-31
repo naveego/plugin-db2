@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
@@ -7,6 +8,9 @@ using Newtonsoft.Json;
 using PluginDb2.API.Discover;
 using PluginDb2.API.Factory;
 using PluginDb2.API.Read;
+using PluginDb2.API.Replication;
+using PluginDb2.API.Write;
+using PluginDb2.DataContracts;
 using PluginDb2.Helper;
 
 namespace PluginDb2.Plugin
@@ -28,7 +32,7 @@ namespace PluginDb2.Plugin
         }
 
         /// <summary>
-        /// Establishes a connection with MySQL.
+        /// Establishes a connection with DB2.
         /// </summary>
         /// <param name="request"></param>
         /// <param name="context"></param>
@@ -74,8 +78,8 @@ namespace PluginDb2.Plugin
             // test cluster factory
             try
             {
-                var conn =  _connectionFactory.GetConnection();
-                
+                var conn = _connectionFactory.GetConnection();
+
                 await conn.OpenAsync();
 
                 if (!await conn.PingAsync())
@@ -103,7 +107,7 @@ namespace PluginDb2.Plugin
             }
 
             _server.Connected = true;
-            
+
             return new ConnectResponse
             {
                 OauthStateJson = request.OauthStateJson,
@@ -136,7 +140,7 @@ namespace PluginDb2.Plugin
 
 
         /// <summary>
-        /// Discovers schemas located in the users Zoho CRM instance
+        /// Discovers schemas located in the users DB2 database
         /// </summary>
         /// <param name="request"></param>
         /// <param name="context"></param>
@@ -210,9 +214,9 @@ namespace PluginDb2.Plugin
                 var limitFlag = request.Limit != 0;
                 var jobId = request.JobId;
                 var recordsCount = 0;
-            
+
                 Logger.SetLogPrefix(jobId);
-            
+
                 var records = Read.ReadRecords(_connectionFactory, schema);
 
                 await foreach (var record in records)
@@ -222,12 +226,12 @@ namespace PluginDb2.Plugin
                     {
                         break;
                     }
-                
+
                     // publish record
                     await responseStream.WriteAsync(record);
                     recordsCount++;
                 }
-            
+
                 Logger.Info($"Published {recordsCount} records");
             }
             catch (Exception e)
@@ -237,7 +241,81 @@ namespace PluginDb2.Plugin
         }
 
         /// <summary>
-        /// Configures replication writebacks to MySQL
+        /// Creates a form and handles form updates for write backs
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override async Task<ConfigureWriteResponse> ConfigureWrite(ConfigureWriteRequest request,
+            ServerCallContext context)
+        {
+            Logger.Info("Configuring write...");
+
+            var storedProcedures = await Write.GetAllStoredProceduresAsync(_connectionFactory);
+
+            var schemaJson = Write.GetSchemaJson(storedProcedures);
+            var uiJson = Write.GetUIJson();
+
+            // if first call 
+            if (string.IsNullOrWhiteSpace(request.Form.DataJson) || request.Form.DataJson == "{}")
+            {
+                return new ConfigureWriteResponse
+                {
+                    Form = new ConfigurationFormResponse
+                    {
+                        DataJson = "",
+                        DataErrorsJson = "",
+                        Errors = { },
+                        SchemaJson = schemaJson,
+                        UiJson = uiJson,
+                        StateJson = ""
+                    },
+                    Schema = null
+                };
+            }
+
+            try
+            {
+                // get form data
+                var formData = JsonConvert.DeserializeObject<ConfigureWriteFormData>(request.Form.DataJson);
+                var storedProcedure = storedProcedures.Find(s => s.GetId() == formData.StoredProcedure);
+
+                // base schema to return
+                var schema = await Write.GetSchemaForStoredProcedureAsync(_connectionFactory, storedProcedure);
+
+                return new ConfigureWriteResponse
+                {
+                    Form = new ConfigurationFormResponse
+                    {
+                        DataJson = request.Form.DataJson,
+                        Errors = { },
+                        SchemaJson = schemaJson,
+                        UiJson = uiJson,
+                        StateJson = request.Form.StateJson
+                    },
+                    Schema = schema
+                };
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, e.Message, context);
+                return new ConfigureWriteResponse
+                {
+                    Form = new ConfigurationFormResponse
+                    {
+                        DataJson = request.Form.DataJson,
+                        Errors = {e.Message},
+                        SchemaJson = schemaJson,
+                        UiJson = uiJson,
+                        StateJson = request.Form.StateJson
+                    },
+                    Schema = null
+                };
+            }
+        }
+
+        /// <summary>
+        /// Configures replication writebacks to DB2
         /// </summary>
         /// <param name="request"></param>
         /// <param name="context"></param>
@@ -245,90 +323,101 @@ namespace PluginDb2.Plugin
         public override Task<ConfigureReplicationResponse> ConfigureReplication(ConfigureReplicationRequest request,
             ServerCallContext context)
         {
-            // Logger.Info("Configuring write...");
-            //
-            // var schemaJson = Replication.GetSchemaJson();
-            // var uiJson = Replication.GetUIJson();
-            //
-            // try
-            // {
-            //     var errors = new List<string>();
-            //     // if (! string.IsNullOrWhiteSpace(request.Form.DataJson))
-            //     // {
-            //     //     // check for config errors
-            //     //     var replicationFormData = JsonConvert.DeserializeObject<ConfigureReplicationFormData>(request.Form.DataJson);
-            //     //
-            //     //     errors = Replication.ValidateReplicationFormData(replicationFormData);
-            //     // }
-            //     //
-            //     return Task.FromResult(new ConfigureReplicationResponse
-            //     {
-            //         Form = new ConfigurationFormResponse
-            //         {
-            //             DataJson = request.Form.DataJson,
-            //             Errors = {errors},
-            //             SchemaJson = schemaJson,
-            //             UiJson = uiJson,
-            //             StateJson = request.Form.StateJson
-            //         }
-            //     });
-            // }
-            // catch (Exception e)
-            // {
-            //     Logger.Error(e, e.Message, context);
-            //     return Task.FromResult(new ConfigureReplicationResponse
-            //     {
-            //         Form = new ConfigurationFormResponse
-            //         {
-            //             DataJson = request.Form.DataJson,
-            //             Errors = {e.Message},
-            //             SchemaJson = schemaJson,
-            //             UiJson = uiJson,
-            //             StateJson = request.Form.StateJson
-            //         }
-            //     });
-            // }
-            
-            return Task.FromResult(new ConfigureReplicationResponse());
+            Logger.SetLogPrefix("configure_replication");
+            Logger.Info($"Configuring write for schema name {request.Schema.Name}...");
+
+            var schemaJson = Replication.GetSchemaJson();
+            var uiJson = Replication.GetUIJson();
+
+            try
+            {
+                var errors = new List<string>();
+                if (!string.IsNullOrWhiteSpace(request.Form.DataJson))
+                {
+                    // check for config errors
+                    var replicationFormData =
+                        JsonConvert.DeserializeObject<ConfigureReplicationFormData>(request.Form.DataJson);
+
+                    errors = replicationFormData.ValidateReplicationFormData();
+                }
+
+                return Task.FromResult(new ConfigureReplicationResponse
+                {
+                    Form = new ConfigurationFormResponse
+                    {
+                        DataJson = request.Form.DataJson,
+                        Errors = {errors},
+                        SchemaJson = schemaJson,
+                        UiJson = uiJson,
+                        StateJson = request.Form.StateJson
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, e.Message, context);
+                return Task.FromResult(new ConfigureReplicationResponse
+                {
+                    Form = new ConfigurationFormResponse
+                    {
+                        DataJson = request.Form.DataJson,
+                        Errors = {e.Message},
+                        SchemaJson = schemaJson,
+                        UiJson = uiJson,
+                        StateJson = request.Form.StateJson
+                    }
+                });
+            }
         }
 
         /// <summary>
-        /// Prepares writeback settings to write to MySQL
+        /// Prepares writeback settings to write to DB2
         /// </summary>
         /// <param name="request"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        public override async Task<PrepareWriteResponse> PrepareWrite(PrepareWriteRequest request, ServerCallContext context)
+        public override async Task<PrepareWriteResponse> PrepareWrite(PrepareWriteRequest request,
+            ServerCallContext context)
         {
-            // Logger.SetLogPrefix(request.DataVersions.JobId);
-            // Logger.Info("Preparing write...");
-            // _server.WriteConfigured = false;
-            //
-            // _server.WriteSettings = new WriteSettings
-            // {
-            //     CommitSLA = request.CommitSlaSeconds,
-            //     Schema = request.Schema,
-            //     Replication = request.Replication,
-            //     DataVersions = request.DataVersions,
-            // };
-            //
-            // if (_server.WriteSettings.IsReplication())
-            // {
-            //     // reconcile job
-            //     Logger.Info($"Starting to reconcile Replication Job {request.DataVersions.JobId}");
-            //     await Replication.ReconcileReplicationJob(_connectionFactory, request);
-            //     Logger.Info($"Finished reconciling Replication Job {request.DataVersions.JobId}");
-            // }
-            //
-            // _server.WriteConfigured = true;
-            //
-            // Logger.Debug(JsonConvert.SerializeObject(_server.WriteSettings, Formatting.Indented));
-            // Logger.Info("Write prepared.");
+            // Logger.SetLogLevel(Logger.LogLevel.Debug);
+            Logger.SetLogPrefix(request.DataVersions.JobId);
+            Logger.Info("Preparing write...");
+            _server.WriteConfigured = false;
+
+            _server.WriteSettings = new WriteSettings
+            {
+                CommitSLA = request.CommitSlaSeconds,
+                Schema = request.Schema,
+                Replication = request.Replication,
+                DataVersions = request.DataVersions,
+            };
+
+            if (_server.WriteSettings.IsReplication())
+            {
+                // reconcile job
+                Logger.Info($"Starting to reconcile Replication Job {request.DataVersions.JobId}");
+                try
+                {
+                    await Replication.ReconcileReplicationJobAsync(_connectionFactory, request);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e, e.Message, context);
+                    return new PrepareWriteResponse();
+                }
+
+                Logger.Info($"Finished reconciling Replication Job {request.DataVersions.JobId}");
+            }
+
+            _server.WriteConfigured = true;
+
+            Logger.Debug(JsonConvert.SerializeObject(_server.WriteSettings, Formatting.Indented));
+            Logger.Info("Write prepared.");
             return new PrepareWriteResponse();
         }
 
         /// <summary>
-        /// Writes records to MySQL
+        /// Writes records to DB2
         /// </summary>
         /// <param name="requestStream"></param>
         /// <param name="responseStream"></param>
@@ -337,45 +426,50 @@ namespace PluginDb2.Plugin
         public override async Task WriteStream(IAsyncStreamReader<Record> requestStream,
             IServerStreamWriter<RecordAck> responseStream, ServerCallContext context)
         {
-            // try
-            // {
-            //     Logger.Info("Writing records to MySQL...");
-            //
-            //     var schema = _server.WriteSettings.Schema;
-            //     var inCount = 0;
-            //     var config =
-            //         JsonConvert.DeserializeObject<ConfigureReplicationFormData>(_server.WriteSettings.Replication
-            //             .SettingsJson);
-            //
-            //     // get next record to publish while connected and configured
-            //     while (await requestStream.MoveNext(context.CancellationToken) && _server.Connected &&
-            //            _server.WriteConfigured)
-            //     {
-            //         var record = requestStream.Current;
-            //         inCount++;
-            //
-            //         Logger.Debug($"Got record: {record.DataJson}");
-            //
-            //         if (_server.WriteSettings.IsReplication())
-            //         {
-            //             
-            //             // send record to source system
-            //             // timeout if it takes longer than the sla
-            //             Task.Run(async () => await Replication.WriteRecord(_connectionFactory, schema, record, config, responseStream), context.CancellationToken);
-            //         }
-            //         else
-            //         {
-            //             throw new Exception("Only replication writebacks are supported");
-            //         }
-            //     }
-            //
-            //     Logger.Info($"Wrote {inCount} records to MySQL.");
-            // }
-            // catch (Exception e)
-            // {
-            //     Logger.Error(e, e.Message, context);
-            //     throw;
-            // }
+            try
+            {
+                Logger.Info("Writing records to MySQL...");
+            
+                var schema = _server.WriteSettings.Schema;
+                var inCount = 0;
+
+                // get next record to publish while connected and configured
+                while (await requestStream.MoveNext(context.CancellationToken) && _server.Connected &&
+                       _server.WriteConfigured)
+                {
+                    var record = requestStream.Current;
+                    inCount++;
+            
+                    Logger.Debug($"Got record: {record.DataJson}");
+            
+                    if (_server.WriteSettings.IsReplication())
+                    {
+                        var config =
+                            JsonConvert.DeserializeObject<ConfigureReplicationFormData>(_server.WriteSettings.Replication
+                                .SettingsJson);
+                        
+                        // send record to source system
+                        // add await for unit testing 
+                        // removed to allow multiple to run at the same time
+                        Task.Run(async () => await Replication.WriteRecord(_connectionFactory, schema, record, config, responseStream), context.CancellationToken);
+                    }
+                    else
+                    {
+                        // send record to source system
+                        // add await for unit testing 
+                        // removed to allow multiple to run at the same time
+                        Task.Run(async () =>
+                                await Write.WriteRecordAsync(_connectionFactory, schema, record, responseStream),
+                            context.CancellationToken);
+                    }
+                }
+            
+                Logger.Info($"Wrote {inCount} records to MySQL.");
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, e.Message, context);
+            }
         }
 
         /// <summary>

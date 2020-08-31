@@ -121,7 +121,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
             return schema;
         }
 
-        private static PropertyType GetType(string dataType)
+        public static PropertyType GetType(string dataType)
         {
             switch (dataType.ToLower().Trim())
             {
