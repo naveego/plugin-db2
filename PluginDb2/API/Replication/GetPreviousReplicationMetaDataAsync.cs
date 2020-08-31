@@ -41,7 +41,7 @@ namespace PluginDb2.API.Replication
                 {
                     // metadata exists
                     await reader.ReadAsync();
-
+                    
                     var request = JsonConvert.DeserializeObject<PrepareWriteRequest>(
                         reader.GetValueById(Constants.ReplicationMetaDataRequest).ToString());
                     var shapeName = reader.GetValueById(Constants.ReplicationMetaDataReplicatedShapeName)

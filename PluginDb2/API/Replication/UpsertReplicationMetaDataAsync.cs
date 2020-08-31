@@ -46,9 +46,7 @@ WHERE {Utility.Utility.GetSafeName(Constants.ReplicationMetaDataJobId)} = '{{6}}
                         Utility.Utility.GetSafeName(table.SchemaName, '"'),
                         Utility.Utility.GetSafeName(table.TableName, '"'), 
                         metaData.Request.DataVersions.JobId,
-                        JsonConvert.SerializeObject(metaData.Request)
-                            // .Replace("\\", "\\\\")
-                        ,
+                        JsonConvert.SerializeObject(metaData.Request),
                         metaData.ReplicatedShapeId,
                         metaData.ReplicatedShapeName,
                         metaData.Timestamp
@@ -66,7 +64,7 @@ WHERE {Utility.Utility.GetSafeName(Constants.ReplicationMetaDataJobId)} = '{{6}}
                         string.Format(UpdateMetaDataQuery, 
                             Utility.Utility.GetSafeName(table.SchemaName, '"'),
                             Utility.Utility.GetSafeName(table.TableName, '"'),
-                            JsonConvert.SerializeObject(metaData.Request).Replace("\\", "\\\\"),
+                            JsonConvert.SerializeObject(metaData.Request),
                             metaData.ReplicatedShapeId,
                             metaData.ReplicatedShapeName,
                             metaData.Timestamp,

@@ -29,7 +29,7 @@ WHERE {2} = '{3}'
             // check if record exists
             var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
-            var count = (long) reader.GetValueById("c");
+            var count = (int) reader.GetValueById("c");
             await conn.CloseAsync();
 
             return count != 0;

@@ -43,7 +43,23 @@ namespace PluginDb2.Plugin
             {
                 Id = id,
                 Name = name,
-                Query = query
+                Query = query,
+                Properties =
+                {
+                    new Property
+                    {
+                        Id = "Id",
+                        Name = "Id",
+                        Type = PropertyType.Integer,
+                        IsKey = true
+                    },
+                    new Property
+                    {
+                        Id = "Name",
+                        Name = "Name",
+                        Type = PropertyType.String
+                    }
+                }
             };
         }
 
@@ -490,7 +506,7 @@ namespace PluginDb2.Plugin
                 {
                     JobId = "jobUnitTest",
                     ShapeId = "shapeUnitTest",
-                    JobDataVersion = 1,
+                    JobDataVersion = 2,
                     ShapeDataVersion = 2
                 }
             };

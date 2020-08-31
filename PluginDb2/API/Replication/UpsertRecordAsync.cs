@@ -109,7 +109,7 @@ namespace PluginDb2.API.Replication
                         primaryValue = JsonConvert.SerializeObject(primaryValue);
                     }
 
-                    querySb.Append($" WHERE {primaryKey.ColumnName} = '{primaryValue}'");
+                    querySb.Append($" WHERE {Utility.Utility.GetSafeName(primaryKey.ColumnName)} = '{primaryValue}'");
 
                     var query = querySb.ToString();
 
