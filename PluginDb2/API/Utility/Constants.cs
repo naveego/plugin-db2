@@ -28,7 +28,7 @@ namespace PluginDb2.API.Utility
             {
                 ColumnName = ReplicationMetaDataRequest,
                 PrimaryKey = false,
-                DataType = "longtext"
+                DataType = "clob"
             },
             new ReplicationColumn
             {
@@ -39,7 +39,7 @@ namespace PluginDb2.API.Utility
             new ReplicationColumn
             {
                 ColumnName = ReplicationMetaDataReplicatedShapeName,
-                DataType = "longtext",
+                DataType = "clob",
                 PrimaryKey = false
             },
             new ReplicationColumn

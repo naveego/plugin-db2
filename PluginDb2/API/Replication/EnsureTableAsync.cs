@@ -40,7 +40,7 @@ AND T.NAME = '{1}'";
             // check if table exists
             var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
-            var count = (long)reader.GetValueById("c");
+            var count = (int)reader.GetValueById("c");
             await conn.CloseAsync();
             
             if (count == 0)
