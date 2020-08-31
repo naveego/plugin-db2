@@ -17,10 +17,10 @@ namespace PluginDb2.Plugin
         {
             return new Settings
             {
-                Server = "",
-                Database = "",
-                Username = "",
-                Password = ""
+                Server = "150.136.152.223",
+                Database = "TESTDB",
+                Username = "DB2INST1",
+                Password = "test123"
             };
         }
 
@@ -151,17 +151,28 @@ namespace PluginDb2.Plugin
 
             // assert
             Assert.IsType<DiscoverSchemasResponse>(response);
-            Assert.True(response.Schemas.Count > 0);
+            
+            var schema = response.Schemas[0];
+            Assert.Equal($"\"TEST_SCHEMA\".\"MOCK_DATA\"", schema.Id);
+            Assert.Equal("TEST_SCHEMA.MOCK_DATA", schema.Name);
+            Assert.Equal($"", schema.Query);
+            Assert.Equal(10, schema.Sample.Count);
+            Assert.Equal(6, schema.Properties.Count);
 
-            var firstSchema = response.Schemas.First();
-            Assert.True(firstSchema.Properties.Count > 0);
+            var property = schema.Properties[0];
+            Assert.Equal("\"EMAIL\"", property.Id);
+            Assert.Equal("EMAIL", property.Name);
+            Assert.Equal("", property.Description);
+            Assert.Equal(PropertyType.String, property.Type);
+            Assert.False(property.IsKey);
+            Assert.True(property.IsNullable);
 
             // cleanup
             await channel.ShutdownAsync();
             await server.ShutdownAsync();
         }
 
-        /*
+        
         [Fact]
         public async Task DiscoverSchemasRefreshTableTest()
         {
@@ -184,7 +195,7 @@ namespace PluginDb2.Plugin
             {
                 Mode = DiscoverSchemasRequest.Types.Mode.Refresh,
                 SampleSize = 10,
-                ToRefresh = {GetTestSchema("`classicmodels`.`customers`", "classicmodels.customers")}
+                ToRefresh = {GetTestSchema("\"TEST_SCHEMA\".\"MOCK_DATA\"", "TEST_SCHEMA.MOCK_DATA")}
             };
 
             // act
@@ -196,19 +207,19 @@ namespace PluginDb2.Plugin
             Assert.Single(response.Schemas);
 
             var schema = response.Schemas[0];
-            Assert.Equal($"`classicmodels`.`customers`", schema.Id);
-            Assert.Equal("classicmodels.customers", schema.Name);
+            Assert.Equal($"\"TEST_SCHEMA\".\"MOCK_DATA\"", schema.Id);
+            Assert.Equal("TEST_SCHEMA.MOCK_DATA", schema.Name);
             Assert.Equal($"", schema.Query);
             Assert.Equal(10, schema.Sample.Count);
-            Assert.Equal(13, schema.Properties.Count);
+            Assert.Equal(6, schema.Properties.Count);
 
             var property = schema.Properties[0];
-            Assert.Equal("`customerNumber`", property.Id);
-            Assert.Equal("customerNumber", property.Name);
+            Assert.Equal("\"EMAIL\"", property.Id);
+            Assert.Equal("EMAIL", property.Name);
             Assert.Equal("", property.Description);
-            Assert.Equal(PropertyType.Integer, property.Type);
-            Assert.True(property.IsKey);
-            Assert.False(property.IsNullable);
+            Assert.Equal(PropertyType.String, property.Type);
+            Assert.False(property.IsKey);
+            Assert.True(property.IsNullable);
 
             // cleanup
             await channel.ShutdownAsync();
@@ -238,7 +249,7 @@ namespace PluginDb2.Plugin
             {
                 Mode = DiscoverSchemasRequest.Types.Mode.Refresh,
                 SampleSize = 10,
-                ToRefresh = {GetTestSchema("test", "test", $"SELECT * FROM `classicmodels`.`customers`")}
+                ToRefresh = {GetTestSchema("test", "test", $"SELECT * FROM \"TEST_SCHEMA\".\"MOCK_DATA\"")}
             };
 
             // act
@@ -252,24 +263,23 @@ namespace PluginDb2.Plugin
             var schema = response.Schemas[0];
             Assert.Equal($"test", schema.Id);
             Assert.Equal("test", schema.Name);
-            Assert.Equal($"SELECT * FROM `classicmodels`.`customers`", schema.Query);
+            Assert.Equal($"SELECT * FROM \"TEST_SCHEMA\".\"MOCK_DATA\"", schema.Query);
             Assert.Equal(10, schema.Sample.Count);
-            Assert.Equal(13, schema.Properties.Count);
+            Assert.Equal(6, schema.Properties.Count);
 
-            var property = schema.Properties[0];
-            Assert.Equal("`customerNumber`", property.Id);
-            Assert.Equal("customerNumber", property.Name);
+            var property = schema.Properties[3];
+            Assert.Equal("\"EMAIL\"", property.Id);
+            Assert.Equal("EMAIL", property.Name);
             Assert.Equal("", property.Description);
-            Assert.Equal(PropertyType.Integer, property.Type);
-            Assert.True(property.IsKey);
-            Assert.False(property.IsNullable);
+            Assert.Equal(PropertyType.String, property.Type);
+            Assert.False(property.IsKey);
+            Assert.True(property.IsNullable);
 
             // cleanup
             await channel.ShutdownAsync();
             await server.ShutdownAsync();
         }
-        */
-        
+
         [Fact]
         public async Task ReadStreamTableSchemaTest()
         {
@@ -314,13 +324,11 @@ namespace PluginDb2.Plugin
             }
 
             // assert
-            Assert.Equal(9, records.Count);
-
-            var firstRecord = records.First();
+            Assert.Equal(1000, records.Count);
 
             var record = JsonConvert.DeserializeObject<Dictionary<string, object>>(records[0].DataJson);
-            Assert.Equal((long)1000060211, record["BUSINESS_PARTNER"]);
-            Assert.Equal("XYZ Insurance Agency", record["BUSINESS_PARTNER_NAME"]);
+            Assert.Equal((long)1, record["\"ID\""]);
+            Assert.Equal("Madison", record["\"FIRST_NAME\""]);
             
             // cleanup
             await channel.ShutdownAsync();
@@ -343,7 +351,7 @@ namespace PluginDb2.Plugin
             var channel = new Channel($"localhost:{port}", ChannelCredentials.Insecure);
             var client = new Publisher.PublisherClient(channel);
 
-            var schema = GetTestSchema("test", "test", $"SELECT * FROM `classicmodels`.`orders`");
+            var schema = GetTestSchema("test", "test", $"SELECT * FROM \"TEST_SCHEMA\".\"MOCK_DATA\"");
             
             var connectRequest = GetConnectSettings();
 
@@ -377,16 +385,11 @@ namespace PluginDb2.Plugin
             }
 
             // assert
-            Assert.Equal(326, records.Count);
+            Assert.Equal(1000, records.Count);
 
             var record = JsonConvert.DeserializeObject<Dictionary<string, object>>(records[0].DataJson);
-            Assert.Equal((long)10100, record["`orderNumber`"]);
-            Assert.Equal(DateTime.Parse("2003-01-06"), record["`orderDate`"]);
-            Assert.Equal(DateTime.Parse("2003-01-13"), record["`requiredDate`"]);
-            Assert.Equal(DateTime.Parse("2003-01-10"), record["`shippedDate`"]);
-            Assert.Equal("Shipped", record["`status`"]);
-            Assert.Equal("", record["`comments`"]);
-            Assert.Equal((long)363, record["`customerNumber`"]);
+            Assert.Equal((long)1, record["\"ID\""]);
+            Assert.Equal("Madison", record["\"FIRST_NAME\""]);
 
             // cleanup
             await channel.ShutdownAsync();
@@ -409,7 +412,7 @@ namespace PluginDb2.Plugin
             var channel = new Channel($"localhost:{port}", ChannelCredentials.Insecure);
             var client = new Publisher.PublisherClient(channel);
 
-            var schema = GetTestSchema("`classicmodels`.`customers`", "classicmodels.customers");
+            var schema = GetTestSchema("\"TEST_SCHEMA\".\"MOCK_DATA\"", "TEST_SCHEMA.MOCK_DATA");
             
             var connectRequest = GetConnectSettings();
 
