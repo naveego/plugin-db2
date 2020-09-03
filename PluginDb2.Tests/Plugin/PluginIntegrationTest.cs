@@ -619,6 +619,47 @@ namespace PluginDb2.Plugin
             await channel.ShutdownAsync();
             await server.ShutdownAsync();
         }
+        
+        [Fact]
+        public async Task ConfigureWriteTest()
+        {
+            // setup
+            Server server = new Server
+            {
+                Services = {Publisher.BindService(new Plugin())},
+                Ports = {new ServerPort("localhost", 0, ServerCredentials.Insecure)}
+            };
+            server.Start();
+
+            var port = server.Ports.First().BoundPort;
+
+            var channel = new Channel($"localhost:{port}", ChannelCredentials.Insecure);
+            var client = new Publisher.PublisherClient(channel);
+
+            var connectRequest = GetConnectSettings();
+
+            var request = new ConfigureWriteRequest
+            {
+                Form = new ConfigurationFormRequest
+                {
+                    DataJson = JsonConvert.SerializeObject(new ConfigureWriteFormData
+                    {
+                        StoredProcedure = "\"TEST_SCHEMA\".\"UPSERTDATA\""
+                    })
+                }
+            };
+
+            // act
+            client.Connect(connectRequest);
+            var response = client.ConfigureWrite(request);
+
+            // assert
+            Assert.IsType<ConfigureWriteResponse>(response);
+
+            // cleanup
+            await channel.ShutdownAsync();
+            await server.ShutdownAsync();
+        }
 
         [Fact]
         public async Task WriteTest()
@@ -644,7 +685,7 @@ namespace PluginDb2.Plugin
                 {
                     DataJson = JsonConvert.SerializeObject(new ConfigureWriteFormData
                     {
-                        StoredProcedure = "`test`.`UpsertIntoTestTable`"
+                        StoredProcedure = "\"TEST_SCHEMA\".\"UPSERTDATA\""
                     })
                 }
             };
@@ -657,7 +698,7 @@ namespace PluginDb2.Plugin
                         Action = Record.Types.Action.Upsert,
                         CorrelationId = "test",
                         RecordId = "record1",
-                        DataJson = "{\"id\":\"1\",\"name\":\"Test First\"}",
+                        DataJson = "{\"P_ID\": 1,\"P_FIRST_NAME\":\"Test FIRST\",\"P_LAST_NAME\":\"Test LAST\",\"P_EMAIL\":\"Test EMAIL\",\"P_GENDER\":\"Test GENDER\",\"P_IP_ADDRESS\":\"Test IP\"}",
                     }
                 }
             };

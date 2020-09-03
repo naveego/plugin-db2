@@ -7,15 +7,18 @@ namespace PluginDb2.API.Write
 {
     public static partial class Write
     {
-        private static string ParamName = "PARAMETER_NAME";
-        private static string DataType = "DATA_TYPE";
+        private static string ParamName = "PARMNAME";
+        private static string DataType = "TYPENAME";
 
         private static string GetStoredProcedureParamsQuery = @"
-SELECT PARAMETER_NAME, DATA_TYPE, ORDINAL_POSITION
-FROM INFORMATION_SCHEMA.PARAMETERS
-WHERE SPECIFIC_SCHEMA = '{0}'
-AND SPECIFIC_NAME = '{1}'
-ORDER BY ORDINAL_POSITION ASC";
+select ""PARMNAME"", ""TYPENAME"", ""ORDINAL""
+from ""SYSCAT"".""ROUTINES"" proc
+left join ""SYSCAT"".""ROUTINEPARMS"" param
+          on proc.""ROUTINESCHEMA"" = param.""ROUTINESCHEMA""
+          and proc.SPECIFICNAME = param.SPECIFICNAME
+where proc.""ROUTINESCHEMA"" = '{0}'
+        and proc.""SPECIFICNAME"" = '{1}'
+        order by ""ORDINAL"" ASC";
 
         public static async Task<Schema> GetSchemaForStoredProcedureAsync(IConnectionFactory connFactory,
             WriteStoredProcedure storedProcedure)

@@ -7,14 +7,16 @@ namespace PluginDb2.API.Write
 {
     public static partial class Write
     {
-        private const string SchemaName = "ROUTINE_SCHEMA";
-        private const string RoutineName = "ROUTINE_NAME";
-        private const string SpecificName = "SPECIFIC_NAME";
+        private const string SchemaName = "ROUTINESCHEMA";
+        private const string RoutineName = "ROUTINENAME";
+        private const string SpecificName = "SPECIFICNAME";
 
         private static string GetAllStoredProceduresQuery = @"
-SELECT ROUTINE_SCHEMA, ROUTINE_NAME, SPECIFIC_NAME
-FROM INFORMATION_SCHEMA.ROUTINES
-WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_SCHEMA != 'sys'";
+select ""ROUTINESCHEMA"", ""ROUTINENAME"", ""SPECIFICNAME""
+        from ""SYSCAT"".""ROUTINES""
+        where ""ROUTINETYPE"" = 'P'
+        and ""ROUTINESCHEMA"" not like 'SYS%'
+        and ""OWNER"" not like 'SYS%'";
         
         public static async Task<List<WriteStoredProcedure>> GetAllStoredProceduresAsync(IConnectionFactory connFactory)
         {
