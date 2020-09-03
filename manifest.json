@@ -11,7 +11,7 @@
   "os": "$GOOS",
   "arch": "$GOARCH",
   "canProduceMultipleSchemas": true,
-  "canAcceptQueryBasedSchemas": false,
+  "canAcceptQueryBasedSchemas": true,
   "canUseOAuth": false,
   "canConfigureWrite": true,
   "canWrite": true,
