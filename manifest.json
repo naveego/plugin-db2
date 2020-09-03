@@ -13,9 +13,10 @@
   "canProduceMultipleSchemas": true,
   "canAcceptQueryBasedSchemas": false,
   "canUseOAuth": false,
-  "canWrite": false,
-  "canConfigureReplication": false,
-  "canWriteReplication": false,
+  "canConfigureWrite": true,
+  "canWrite": true,
+  "canConfigureReplication": true,
+  "canWriteReplication": true,
   "querySchema": {
     "ui": {
       "ui:widget": "code",

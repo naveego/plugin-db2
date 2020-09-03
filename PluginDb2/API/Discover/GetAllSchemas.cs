@@ -90,7 +90,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                 // add column to schema
                 var property = new Property
                 {
-                    Id = $"{reader.GetValueById(ColumnName)}",
+                    Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName).ToString()),
                     Name = reader.GetValueById(ColumnName).ToString(),
                     IsKey = reader.GetValueById(ColumnKey).ToString() == "1",
                     IsNullable = reader.GetValueById(IsNullable).ToString() == "Y",
@@ -121,7 +121,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
             return schema;
         }
 
-        private static PropertyType GetType(string dataType)
+        public static PropertyType GetType(string dataType)
         {
             switch (dataType.ToLower().Trim())
             {
@@ -132,11 +132,9 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                     return PropertyType.Date;
                 case "time":
                     return PropertyType.Time;
-                case "tinyint":
                 case "smallint":
-                case "mediumint":
                 case "bigint":
-                case "int":
+                case "integer":
                     return PropertyType.Integer;
                 case "decimal":
                     return PropertyType.Decimal;

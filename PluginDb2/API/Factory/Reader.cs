@@ -28,7 +28,7 @@ namespace PluginDb2.API.Factory
             return _reader.GetSchemaTable();
         }
 
-        public object GetValueById(string id, char trimChar = '`')
+        public object GetValueById(string id, char trimChar = '"')
         {
             return _reader[id.Trim(trimChar)];
         }

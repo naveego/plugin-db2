@@ -48,7 +48,7 @@ namespace PluginDb2.API.Discover
                         // create property
                         var property = new Property
                         {
-                            Id = Utility.Utility.GetSafeName(colName, '`'),
+                            Id = Utility.Utility.GetSafeName(colName, '"'),
                             Name = colName,
                             Description = "",
                             Type = GetPropertyType(row),
