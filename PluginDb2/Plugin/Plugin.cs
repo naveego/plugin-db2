@@ -428,7 +428,7 @@ namespace PluginDb2.Plugin
         {
             try
             {
-                Logger.Info("Writing records to MySQL...");
+                Logger.Info("Writing records to DB2...");
             
                 var schema = _server.WriteSettings.Schema;
                 var inCount = 0;
@@ -464,7 +464,7 @@ namespace PluginDb2.Plugin
                     }
                 }
             
-                Logger.Info($"Wrote {inCount} records to MySQL.");
+                Logger.Info($"Wrote {inCount} records to DB2.");
             }
             catch (Exception e)
             {

@@ -18,7 +18,7 @@ namespace PluginDb2.Helper
         }
 
         private static string _logPrefix = "";
-        private static string _fileName = @"plugin-filereader-log.txt";
+        private static string _fileName = @"plugin-db2-log.txt";
         private static LogLevel _level = LogLevel.Info;
 
         /// <summary>
