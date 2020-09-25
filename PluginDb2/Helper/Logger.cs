@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using Grpc.Core;
+using Serilog;
 
 namespace PluginDb2.Helper
 {
@@ -17,36 +18,41 @@ namespace PluginDb2.Helper
         }
 
         private static string _logPrefix = "";
-        private static string _path = @"plugin-db2-log.txt";
+        private static string _fileName = @"plugin-filereader-log.txt";
         private static LogLevel _level = LogLevel.Info;
-        private static ReaderWriterLockSlim _readWriteLock = new ReaderWriterLockSlim();
-        
+
         /// <summary>
-        /// Writes a log message with time stamp to a file
+        /// Initializes the logger
         /// </summary>
-        /// <param name="message"></param>
-        private static void Log(string message)
+        public static void Init()
         {
-            // Set Status to Locked
-            _readWriteLock.EnterWriteLock();
-            try
-            {
-                // ensure log directory exists
-                Directory.CreateDirectory("logs");
-                
-                // Append text to the file
-                var filePath = $"logs/{_logPrefix}{_path}";
-                using (StreamWriter sw = File.AppendText(filePath))
-                {
-                    sw.WriteLine($"{DateTime.Now} {message}");
-                    sw.Close();
-                }
-            }
-            finally
-            {
-                // Release lock
-                _readWriteLock.ExitWriteLock();
-            }
+            // ensure log directory exists
+            Directory.CreateDirectory("logs");
+            
+            // setup serilog
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .Enrich.FromLogContext()
+                .WriteTo.Async(
+                    sinkConfig =>
+                    {
+                        sinkConfig.File(
+                            $"logs/{_fileName}",
+                            rollingInterval: RollingInterval.Day,
+                            shared: true,
+                            rollOnFileSizeLimit: true
+                        );
+                        sinkConfig.Console();
+                    })
+                .CreateLogger();
+        }
+
+        /// <summary>
+        /// Closes the logger and flushes any pending messages in the buffer
+        /// </summary>
+        public static void CloseAndFlush()
+        {
+            Log.CloseAndFlush();
         }
         
         /// <summary>
@@ -54,11 +60,11 @@ namespace PluginDb2.Helper
         /// </summary>
         public static void Clean()
         {
-            if (File.Exists(_path))
+            if (File.Exists(_fileName))
             {
-                if ((File.GetCreationTime(_path) - DateTime.Now).TotalDays > 7)
+                if ((File.GetCreationTime(_fileName) - DateTime.Now).TotalDays > 7)
                 {
-                    File.Delete(_path);
+                    File.Delete(_fileName);
                 }
             }
         }
@@ -74,7 +80,9 @@ namespace PluginDb2.Helper
                 return;
             }
             
-            Log(message);
+            GrpcEnvironment.Logger.Debug(message);
+            
+            Log.Verbose($"{_logPrefix} {message}");
         }
         
         /// <summary>
@@ -88,7 +96,9 @@ namespace PluginDb2.Helper
                 return;
             }
             
-            Log(message);
+            GrpcEnvironment.Logger.Debug(message);
+            
+            Log.Debug($"{_logPrefix} {message}");
         }
         /// <summary>
         /// Logging method for Info messages
@@ -101,7 +111,9 @@ namespace PluginDb2.Helper
                 return;
             }
             
-            Log(message);
+            GrpcEnvironment.Logger.Info(message);
+            
+            Log.Information($"{_logPrefix} {message}");
         }
         
         /// <summary>
@@ -118,7 +130,7 @@ namespace PluginDb2.Helper
             
             GrpcEnvironment.Logger.Error(exception, message);
             
-            Log(message);
+            Log.Error(exception, $"{_logPrefix} {message}");
         }
         
         /// <summary>
@@ -137,7 +149,7 @@ namespace PluginDb2.Helper
             GrpcEnvironment.Logger.Error(exception, message);
             context.Status = new Status(StatusCode.Unknown, message);
             
-            Log(message);
+            Log.Error(exception, $"{_logPrefix} {message}");
         }
 
         /// <summary>
@@ -155,7 +167,7 @@ namespace PluginDb2.Helper
         /// <param name="logPrefix"></param>
         public static void SetLogPrefix(string logPrefix)
         {
-            _logPrefix = logPrefix;
+            _logPrefix = $"<{logPrefix}>";
         }
     }
 }

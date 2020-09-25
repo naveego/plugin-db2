@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Grpc.Core;
-using IBM.Data.DB2.Core;
 using Naveego.Sdk.Plugins;
 using PluginDb2.Helper;
 
@@ -13,20 +12,15 @@ namespace PluginDb2
         {
             try
             {
+                // setup logger
+                Logger.Init();
+
                 // Add final chance exception handler
                 AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) =>
                 {
                     Logger.Error(null, $"died: {eventArgs.ExceptionObject}");
+                    Logger.CloseAndFlush();
                 };
-                
-                // Add the DB Driver to the PATH
-                var currentPath = Environment.GetEnvironmentVariable("PATH");
-                var binPath = System.IO.Path.Join(System.Environment.CurrentDirectory, "clidriver", "bin");
-                Environment.SetEnvironmentVariable("PATH", currentPath + ":" + binPath);
-
-                // clean old logs on start up
-                Logger.Clean();
-
                 
                 // create new server and start it
                 Server server = new Server
@@ -48,6 +42,7 @@ namespace PluginDb2
                 Console.ReadLine();
 
                 Logger.Info("Plugin exiting...");
+                Logger.CloseAndFlush();
 
                 // shutdown server
                 server.ShutdownAsync().Wait();
@@ -55,6 +50,8 @@ namespace PluginDb2
             catch (Exception e)
             {
                 Logger.Error(e, e.Message);
+                Logger.CloseAndFlush();
+                throw;
             }
         }
     }
