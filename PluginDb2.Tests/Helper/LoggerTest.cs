@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using PluginDb2.Helper;
+using Naveego.Sdk.Plugins;
 using Xunit;
 
 namespace PluginDb2.Helper
@@ -27,8 +27,8 @@ namespace PluginDb2.Helper
             {
             }
 
-            Logger.Init();
-            Logger.SetLogLevel(Logger.LogLevel.Verbose);
+            Logger.Init(_logDirectory);
+            Logger.SetLogLevel(LogLevel.Trace);
 
             // act
             Logger.Verbose("verbose");
@@ -66,8 +66,8 @@ namespace PluginDb2.Helper
             {
             }
 
-            Logger.Init();
-            Logger.SetLogLevel(Logger.LogLevel.Debug);
+            Logger.Init(_logDirectory);
+            Logger.SetLogLevel(LogLevel.Debug);
 
             // act
             Logger.Verbose("verbose");
@@ -105,8 +105,8 @@ namespace PluginDb2.Helper
             {
             }
 
-            Logger.Init();
-            Logger.SetLogLevel(Logger.LogLevel.Info);
+            Logger.Init(_logDirectory);
+            Logger.SetLogLevel(LogLevel.Info);
 
             // act
             Logger.Verbose("verbose");
@@ -144,8 +144,8 @@ namespace PluginDb2.Helper
             {
             }
 
-            Logger.Init();
-            Logger.SetLogLevel(Logger.LogLevel.Error);
+            Logger.Init(_logDirectory);
+            Logger.SetLogLevel(LogLevel.Error);
 
             // act
             Logger.Verbose("verbose");
@@ -165,11 +165,13 @@ namespace PluginDb2.Helper
             // cleanup
             File.Delete(files.First());
         }
-
+        
         [Fact]
-        public void OffTest()
+        public void ConfigureTest()
         {
             var files = Directory.GetFiles(_logDirectory);
+            var newLogsPath = "newlogs";
+            var newFiles = Directory.GetFiles(newLogsPath);
             
             // setup
             try
@@ -178,15 +180,27 @@ namespace PluginDb2.Helper
                 {
                     File.Delete(file);
                 }
+                
+                foreach (var file in newFiles)
+                {
+                    File.Delete(file);
+                }
             }
             catch
             {
             }
 
-            Logger.Init();
-            Logger.SetLogLevel(Logger.LogLevel.Off);
+            Logger.Init(_logDirectory);
+            Logger.SetLogLevel(LogLevel.Error);
 
             // act
+            Logger.Verbose("verbose");
+            Logger.Debug("debug");
+            Logger.Info("info");
+            Logger.Error(new Exception("error"), "error");
+
+
+            Logger.Init(newLogsPath);
             Logger.Verbose("verbose");
             Logger.Debug("debug");
             Logger.Info("info");
@@ -195,16 +209,18 @@ namespace PluginDb2.Helper
 
             // assert
             files = Directory.GetFiles(_logDirectory);
-            Assert.Empty(files);
+            Assert.Single(files);
+            
+            newFiles = Directory.GetFiles(newLogsPath);
+            Assert.Single(newFiles);
+            
+            string[] lines = File.ReadAllLines(newFiles.First());
+
+            Assert.Equal(2, lines.Length);
 
             // cleanup
-            try
-            {
-                File.Delete(files.First());
-            }
-            catch (Exception e)
-            {
-            }
+            File.Delete(files.First());
+            File.Delete(newFiles.First());
         }
     }
 }
