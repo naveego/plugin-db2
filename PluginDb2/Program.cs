@@ -23,7 +23,7 @@ namespace PluginDb2
                 var assemblyPath = Assembly.GetExecutingAssembly().Location;
                 var installDirectory = Path.GetDirectoryName(assemblyPath);
 
-                if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LD_LIBRARY_PATH")))
+                if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LD_LIBRARY_PATH")) && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", $"{installDirectory}/clidriver/lib");
 
@@ -31,7 +31,7 @@ namespace PluginDb2
                     {
                         StartInfo = new ProcessStartInfo
                         {
-                            FileName = $"{Path.GetFileNameWithoutExtension(assemblyPath)}{(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "")}",
+                            FileName = $"{Path.GetFileNameWithoutExtension(assemblyPath)}",
                             Arguments = "",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
