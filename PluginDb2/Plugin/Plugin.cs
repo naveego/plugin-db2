@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Naveego.Sdk.Plugins;
@@ -66,6 +67,7 @@ namespace PluginDb2.Plugin
         public override async Task<ConnectResponse> Connect(ConnectRequest request, ServerCallContext context)
         {
             Logger.SetLogPrefix("connect");
+
             // validate settings passed in
             try
             {

@@ -21,6 +21,4 @@
       <ProjectReference Include="..\PluginDb2\PluginDb2.csproj" />
     </ItemGroup>
 
-
-
 </Project>

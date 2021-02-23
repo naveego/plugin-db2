@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Grpc.Core;
 using Naveego.Sdk.Plugins;
 using PluginDb2.Helper;
@@ -8,10 +13,41 @@ namespace PluginDb2
 {
     class Program
     {
+        // private const string LDLibrary = "LD_LIBRARY_PATH";
+
         static void Main(string[] args)
         {
             try
             {
+                // configure env
+                var assemblyPath = Assembly.GetExecutingAssembly().Location;
+                var installDirectory = Path.GetDirectoryName(assemblyPath);
+
+                if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LD_LIBRARY_PATH")))
+                {
+                    Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", $"{installDirectory}/clidriver/lib");
+
+                    var proc = new Process
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = $"{Path.GetFileNameWithoutExtension(assemblyPath)}{(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "")}",
+                            Arguments = "",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            CreateNoWindow = true
+                        }
+                    };
+
+                    proc.Start();
+
+                    while (!proc.StandardOutput.EndOfStream)
+                    {
+                        var line = proc.StandardOutput.ReadLine();
+                        Console.WriteLine(line);
+                    }
+                }
+
                 // setup logger
                 Logger.Init();
 
@@ -21,7 +57,7 @@ namespace PluginDb2
                     Logger.Error(null, $"died: {eventArgs.ExceptionObject}");
                     Logger.CloseAndFlush();
                 };
-                
+
                 // create new server and start it
                 Server server = new Server
                 {
