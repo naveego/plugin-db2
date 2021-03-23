@@ -16,6 +16,10 @@ namespace PluginDb2.API.Utility
         public static string ReplicationMetaDataReplicatedShapeName = "NaveegoShapeName";
         public static string ReplicationMetaDataTimestamp = "Timestamp";
 
+        public const string ModeLUW = "LUW";
+        public const string ModeISeries = "iSeries";
+        public const string ModeZOS = "zOS";
+
         public static List<ReplicationColumn> ReplicationMetaDataColumns = new List<ReplicationColumn>
         {
             new ReplicationColumn

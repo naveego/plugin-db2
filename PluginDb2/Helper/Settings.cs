@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PluginDb2.API.Utility;
 
 namespace PluginDb2.Helper
 {
@@ -14,6 +15,10 @@ namespace PluginDb2.Helper
         public string Username { get; set; }
         
         public string Password { get; set; }
+        
+        public string Mode { get; set; }
+        
+        public bool DisableDiscovery { get; set; }
 
         /// <summary>
         /// Validates the settings input object
@@ -48,6 +53,14 @@ namespace PluginDb2.Helper
         public string GetConnectionString(string database)
         {
             return $"SERVER={Server}:{Port};DATABASE={database};UID={Username};PWD={Password}";
+        }
+
+        public void ConvertLegacySettings()
+        {
+            if (string.IsNullOrWhiteSpace(Mode))
+            {
+                Mode = Constants.ModeLUW;
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Naveego.Sdk.Plugins;
 using PluginDb2.API.Factory;
+using PluginDb2.API.Utility;
 using PluginDb2.Helper;
 
 namespace PluginDb2.API.Discover
@@ -19,7 +20,7 @@ namespace PluginDb2.API.Discover
         private const string IsNullable = "ALLOW_NULLS";
         private const string CharacterMaxLength = "MAX_CHAR_LENGTH";
 
-        private const string GetAllTablesAndColumnsQuery = @"SELECT * FROM
+        private const string GetAllTablesAndColumnsQuery_LUW = @"SELECT * FROM
 (
 SELECT 
 t.NAME AS TABLE_NAME,
@@ -52,12 +53,60 @@ INNER JOIN SYSIBM.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR
 ) as c
 ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
 
-        public static async IAsyncEnumerable<Schema> GetAllSchemas(IConnectionFactory connFactory, int sampleSize = 5)
+        private const string GetAllTablesAndColumnsQuery_ISeries = @"SELECT * FROM
+(
+SELECT 
+t.NAME AS TABLE_NAME,
+t.CREATOR AS TABLE_SCHEMA,
+'T' AS TABLE_TYPE,
+c.NAME as COLUMN_NAME,
+c.COLTYPE AS DATA_TYPE,
+c.NULLS as ALLOW_NULLS,
+c.LENGTH as MAX_CHAR_LENGTH,
+c.KEYSEQ AS IS_KEY
+FROM 
+QSYS2.SYSTABLES T
+INNER JOIN QSYS2.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR)
+WHERE t.TYPE = 'T' and tbspace NOT IN ('SYSCATSPACE', 'SYSTOOLSPACE')
+
+UNION ALL
+
+SELECT 
+t.NAME AS TABLE_NAME,
+t.CREATOR AS TABLE_SCHEMA,
+'V' AS TABLE_TYPE,
+c.NAME as COLUMN_NAME,
+c.COLTYPE AS DATA_TYPE,
+c.NULLS as ALLOW_NULLS,
+c.LENGTH as MAX_CHAR_LENGTH,
+c.KEYSEQ AS IS_KEY
+FROM 
+QSYS2.SYSVIEWS T
+INNER JOIN QSYS2.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR) AND t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT')
+) as c
+ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
+
+        public static async IAsyncEnumerable<Schema> GetAllSchemas(IConnectionFactory connFactory, Settings settings,
+            int sampleSize = 5)
         {
             var conn = connFactory.GetConnection();
             await conn.OpenAsync();
 
-            var cmd = connFactory.GetCommand(GetAllTablesAndColumnsQuery, conn);
+            string query;
+
+            switch (settings.Mode)
+            {
+                case Constants.ModeISeries:
+                    query = GetAllTablesAndColumnsQuery_ISeries;
+                    break;
+                case Constants.ModeZOS:
+                case Constants.ModeLUW:
+                default:
+                    query = GetAllTablesAndColumnsQuery_LUW;
+                    break;
+            }
+
+            var cmd = connFactory.GetCommand(query, conn);
             var reader = await cmd.ExecuteReaderAsync();
 
             Schema schema = null;

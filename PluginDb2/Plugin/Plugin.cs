@@ -72,6 +72,7 @@ namespace PluginDb2.Plugin
             try
             {
                 _server.Settings = JsonConvert.DeserializeObject<Settings>(request.SettingsJson);
+                _server.Settings.ConvertLegacySettings();
                 _server.Settings.Validate();
             }
             catch (Exception e)
@@ -186,10 +187,16 @@ namespace PluginDb2.Plugin
             // only return requested schemas if refresh mode selected
             if (request.Mode == DiscoverSchemasRequest.Types.Mode.All)
             {
+                if (_server.Settings.DisableDiscovery)
+                {
+                    Logger.Info("Discovery is disabled. Skipping.");
+                    return new DiscoverSchemasResponse();
+                }
+                
                 // get all schemas
                 try
                 {
-                    var schemas = Discover.GetAllSchemas(_connectionFactory, sampleSize);
+                    var schemas = Discover.GetAllSchemas(_connectionFactory, _server.Settings, sampleSize);
 
                     discoverSchemasResponse.Schemas.AddRange(await schemas.ToListAsync());
 

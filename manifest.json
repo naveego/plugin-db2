@@ -37,7 +37,9 @@
         "Port",
         "Database",
         "Username",
-        "Password"
+        "Password",
+        "Mode",
+        "DisableDiscovery"
       ],
       "Password": {
         "ui:widget": "password"
@@ -70,13 +72,36 @@
           "type": "string",
           "title": "Database",
           "description": "The Database within the DB2 instance"
+        },
+        "Mode": {
+          "type": "string",
+          "title": "Mode",
+          "description": "The DB2 mode the target system is running",
+          "default": "LUW",
+          "enum": [
+            "LUW",
+            "iSeries",
+            "zOS"
+          ]
+        },
+        "DisableDiscovery": {
+          "type": "boolean",
+          "title": "Disable Discovery",
+          "description": "Disable automatic discovery",
+          "default": false,
+          "examples": [
+            true,
+            false
+          ]
         }
       },
       "required": [
         "Server",
         "Username",
         "Password",
-        "Database"
+        "Database",
+        "Mode",
+        "DisableDiscovery"
       ]
     }
   }
