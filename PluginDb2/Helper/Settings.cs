@@ -43,7 +43,7 @@ namespace PluginDb2.Helper
         /// <returns></returns>
         public string GetConnectionString()
         {
-            return $"SERVER={Server}:{Port};DATABASE={Database};UID={Username};PWD={Password}";
+            return $"SERVER={Server}:{Port};DATABASE={Database};UID={Username};PWD={Password};QueryTimeout=0;";
         }
         
         /// <summary>
@@ -52,7 +52,7 @@ namespace PluginDb2.Helper
         /// <returns></returns>
         public string GetConnectionString(string database)
         {
-            return $"SERVER={Server}:{Port};DATABASE={database};UID={Username};PWD={Password}";
+            return $"SERVER={Server}:{Port};DATABASE={database};UID={Username};PWD={Password};QueryTimeout=0;";
         }
 
         public void ConvertLegacySettings()

@@ -9,17 +9,17 @@ namespace PluginDb2.API.Factory
 
         public Command()
         {
-            _cmd = new DB2Command();
+            _cmd = new DB2Command() {CommandTimeout = 0};
         }
 
         public Command(string commandText)
         {
-            _cmd = new DB2Command(commandText);
+            _cmd = new DB2Command(commandText) {CommandTimeout = 0};
         }
 
         public Command(string commandText, IConnection conn)
         {
-            _cmd = new DB2Command(commandText, (DB2Connection) conn.GetConnection());
+            _cmd = new DB2Command(commandText, (DB2Connection) conn.GetConnection()) {CommandTimeout = 0};
         }
 
         public void SetConnection(IConnection conn)
