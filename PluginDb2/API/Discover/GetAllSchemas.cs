@@ -67,7 +67,7 @@ c.LENGTH as MAX_CHAR_LENGTH,
 FROM 
 QSYS2.SYSTABLES T
 INNER JOIN QSYS2.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR)
-WHERE t.TYPE = 'T' AND t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT', 'QSYS') AND t.NAME NOT LIKE '%SYS%'
+WHERE t.TYPE = 'T' AND t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT', 'QSYS')
 
 UNION ALL
 
@@ -82,7 +82,7 @@ c.LENGTH as MAX_CHAR_LENGTH,
 '0' AS IS_KEY
 FROM 
 QSYS2.SYSVIEWS T
-INNER JOIN QSYS2.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR) AND t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT', 'QSYS') AND t.NAME NOT LIKE '%SYS%'
+INNER JOIN QSYS2.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR) AND t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT', 'QSYS')
 ) as c
 ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
 
@@ -97,7 +97,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
             switch (settings.Mode)
             {
                 case Constants.ModeISeries:
-                    query = GetAllTablesAndColumnsQuery_ISeries;
+                    query = string.Format(GetAllTablesAndColumnsQuery_ISeries, settings.Username, settings.Username);
                     break;
                 case Constants.ModeZOS:
                 case Constants.ModeLUW:
@@ -162,12 +162,19 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
         private static async Task<Schema> AddSampleAndCount(IConnectionFactory connFactory, Schema schema,
             int sampleSize)
         {
-            // add sample and count
-            var records = Read.Read.ReadRecords(connFactory, schema).Take(sampleSize);
-            schema.Sample.AddRange(await records.ToListAsync());
-            schema.Count = await GetCountOfRecords(connFactory, schema);
-
-            return schema;
+            try
+            {
+                // add sample and count
+                var records = Read.Read.ReadRecords(connFactory, schema).Take(sampleSize);
+                schema.Sample.AddRange(await records.ToListAsync());
+                schema.Count = await GetCountOfRecords(connFactory, schema);
+                
+                return schema;
+            }
+            catch
+            {
+                return schema;
+            }
         }
 
         public static PropertyType GetType(string dataType)
