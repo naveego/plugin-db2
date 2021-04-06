@@ -104,7 +104,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                     break;
             }
 
-            var cmd = connFactory.GetCommand(query, null);
+            var cmd = connFactory.GetCommand(query, conn);
             var reader = await cmd.ExecuteReaderAsync();
 
             Schema schema = null;

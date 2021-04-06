@@ -105,12 +105,11 @@ namespace PluginDb2.Plugin
             }
 
             // test cluster factory
+            var conn = _connectionFactory.GetConnection();
             try
             {
-                var conn = _connectionFactory.GetConnection();
-
                 await conn.OpenAsync();
-
+                
                 if (!await conn.PingAsync())
                 {
                     return new ConnectResponse
@@ -133,6 +132,10 @@ namespace PluginDb2.Plugin
                     OauthError = "",
                     SettingsError = ""
                 };
+            }
+            finally
+            {
+                await conn.CloseAsync();
             }
 
             _server.Connected = true;
