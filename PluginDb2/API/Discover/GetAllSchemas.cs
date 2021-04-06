@@ -84,7 +84,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                 case Constants.ModeISeries:
                     query = string.Format(
                         GetAllTablesAndColumnsQuery_ISeries,
-                        settings.DiscoveryLibraries.Count > 0 ?
+                        settings?.DiscoveryLibraries != null && settings?.DiscoveryLibraries.Count > 0 ?
                         $"AND t.DBNAME IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
                         : ""
                     );
@@ -94,10 +94,10 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                 default:
                     query = string.Format(
                         GetAllTablesAndColumnsQuery_LUW,
-                        settings.DiscoveryLibraries.Count > 0 ?
+                        settings?.DiscoveryLibraries != null && settings.DiscoveryLibraries?.Count > 0 ?
                             $"AND t.CREATOR IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
                             : "",
-                        settings.DiscoveryLibraries.Count > 0 ?
+                        settings?.DiscoveryLibraries != null && settings?.DiscoveryLibraries.Count > 0 ?
                             $"AND t.CREATOR IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
                             : ""
                     );
@@ -137,12 +137,12 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                 // add column to schema
                 var property = new Property
                 {
-                    Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName).ToString()),
-                    Name = reader.GetValueById(ColumnName).ToString(),
-                    IsKey = reader.GetValueById(ColumnKey).ToString() == "1",
-                    IsNullable = reader.GetValueById(IsNullable).ToString() == "Y",
-                    Type = GetType(reader.GetValueById(DataType).ToString()),
-                    TypeAtSource = GetTypeAtSource(reader.GetValueById(DataType).ToString(),
+                    Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName)?.ToString()),
+                    Name = reader.GetValueById(ColumnName)?.ToString(),
+                    IsKey = reader.GetValueById(ColumnKey)?.ToString() == "1",
+                    IsNullable = reader.GetValueById(IsNullable)?.ToString() == "Y",
+                    Type = GetType(reader.GetValueById(DataType)?.ToString()),
+                    TypeAtSource = GetTypeAtSource(reader.GetValueById(DataType)?.ToString(),
                         reader.GetValueById(CharacterMaxLength))
                 };
                 schema?.Properties.Add(property);
