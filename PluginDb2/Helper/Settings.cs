@@ -20,6 +20,8 @@ namespace PluginDb2.Helper
         
         public bool DisableDiscovery { get; set; }
 
+        public List<string> DiscoveryLibraries { get; set; } = new List<string>();
+
         /// <summary>
         /// Validates the settings input object
         /// </summary>

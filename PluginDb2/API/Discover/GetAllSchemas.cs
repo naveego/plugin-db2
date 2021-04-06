@@ -34,7 +34,7 @@ c.KEYSEQ AS IS_KEY
 FROM 
 SYSIBM.SYSTABLES T
 INNER JOIN SYSIBM.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR)
-WHERE t.TYPE = 'T' and tbspace NOT IN ('SYSCATSPACE', 'SYSTOOLSPACE')
+WHERE t.TYPE = 'T' and tbspace NOT IN ('SYSCATSPACE', 'SYSTOOLSPACE') {0}
 
 UNION ALL
 
@@ -49,7 +49,7 @@ c.LENGTH as MAX_CHAR_LENGTH,
 c.KEYSEQ AS IS_KEY
 FROM 
 SYSIBM.SYSVIEWS T
-INNER JOIN SYSIBM.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR) AND t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT')
+INNER JOIN SYSIBM.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR) AND t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT') {1}
 ) as c
 ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
 
@@ -57,7 +57,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
 (
 SELECT 
 t.NAME AS TABLE_NAME,
-t.CREATOR AS TABLE_SCHEMA,
+t.DBNAME AS TABLE_SCHEMA,
 'T' AS TABLE_TYPE,
 c.NAME as COLUMN_NAME,
 c.COLTYPE AS DATA_TYPE,
@@ -67,22 +67,7 @@ c.LENGTH as MAX_CHAR_LENGTH,
 FROM 
 QSYS2.SYSTABLES T
 INNER JOIN QSYS2.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR)
-WHERE t.TYPE = 'T' AND t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT', 'QSYS')
-
-UNION ALL
-
-SELECT 
-t.NAME AS TABLE_NAME,
-t.CREATOR AS TABLE_SCHEMA,
-'V' AS TABLE_TYPE,
-c.NAME as COLUMN_NAME,
-c.COLTYPE AS DATA_TYPE,
-c.NULLS as ALLOW_NULLS,
-c.LENGTH as MAX_CHAR_LENGTH,
-'0' AS IS_KEY
-FROM 
-QSYS2.SYSVIEWS T
-INNER JOIN QSYS2.SYSCOLUMNS C ON (T.NAME = C.TBNAME AND T.CREATOR = c.TBCREATOR) AND t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT', 'QSYS')
+WHERE t.CREATOR NOT IN ('SYSIBM', 'SYSCAT', 'SYSIBMADM', 'SYSSTAT', 'QSYS') {0}
 ) as c
 ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
 
@@ -97,16 +82,29 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
             switch (settings.Mode)
             {
                 case Constants.ModeISeries:
-                    query = string.Format(GetAllTablesAndColumnsQuery_ISeries, settings.Username, settings.Username);
+                    query = string.Format(
+                        GetAllTablesAndColumnsQuery_ISeries,
+                        settings.DiscoveryLibraries.Count > 0 ?
+                        $"AND t.DBNAME IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
+                        : ""
+                    );
                     break;
                 case Constants.ModeZOS:
                 case Constants.ModeLUW:
                 default:
-                    query = GetAllTablesAndColumnsQuery_LUW;
+                    query = string.Format(
+                        GetAllTablesAndColumnsQuery_LUW,
+                        settings.DiscoveryLibraries.Count > 0 ?
+                            $"AND t.CREATOR IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
+                            : "",
+                        settings.DiscoveryLibraries.Count > 0 ?
+                            $"AND t.CREATOR IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
+                            : ""
+                    );
                     break;
             }
 
-            var cmd = connFactory.GetCommand(query, conn);
+            var cmd = connFactory.GetCommand(query, null);
             var reader = await cmd.ExecuteReaderAsync();
 
             Schema schema = null;
@@ -168,7 +166,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                 var records = Read.Read.ReadRecords(connFactory, schema).Take(sampleSize);
                 schema.Sample.AddRange(await records.ToListAsync());
                 schema.Count = await GetCountOfRecords(connFactory, schema);
-                
+
                 return schema;
             }
             catch
