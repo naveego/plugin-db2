@@ -53,10 +53,18 @@ namespace PluginDb2
                     proc.BeginErrorReadLine();
                     proc.BeginOutputReadLine();
                     proc.Start();
-                    
-                    // wait to exit until given input
-                    Console.ReadLine();
 
+                    Task.Run(() =>
+                    {
+                        // wait to exit until given input
+                        Console.ReadLine();
+                        Logger.Info("Got shutdown signal, plugin stopping child and exiting...");
+                        Logger.CloseAndFlush();
+                        proc.Kill(true);
+                    });
+                    
+                    proc.WaitForExit();
+                    
                     return;
                 }
 
