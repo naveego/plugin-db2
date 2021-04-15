@@ -43,12 +43,21 @@ namespace PluginDb2
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
-                            CreateNoWindow = true
+                            CreateNoWindow = true,
+                           
                         }
                     };
-                    proc.OutputDataReceived += (s, a) => Console.WriteLine("received output: {0}", a.Data);
-                    proc.ErrorDataReceived += (s, a) => Console.WriteLine("received error: {0}", a.Data);
+                    proc.OutputDataReceived += (s, a) => Console.Out.WriteLine(a.Data);
+                    proc.ErrorDataReceived += (s, a) => Console.Error.WriteLine(a.Data);
+                    proc.EnableRaisingEvents = true;
+                    proc.BeginErrorReadLine();
+                    proc.BeginOutputReadLine();
                     proc.Start();
+                    
+                    // wait to exit until given input
+                    Console.ReadLine();
+
+                    return;
                 }
 
                 // Add final chance exception handler
@@ -89,9 +98,10 @@ namespace PluginDb2
             }
             catch (Exception e)
             {
+                Console.Error.WriteLine("Fatal error:\n" + e);
                 Logger.Error(e, e.Message);
                 Logger.CloseAndFlush();
-                throw;
+                Environment.Exit(1);
             }
         }
         
