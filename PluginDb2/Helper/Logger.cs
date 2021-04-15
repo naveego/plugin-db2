@@ -32,7 +32,7 @@ namespace PluginDb2.Helper
                     sinkConfig =>
                     {
                         sinkConfig.File(
-                            $"{logPath}/{_fileName}",
+                            $"logs/{_fileName}",
                             rollingInterval: RollingInterval.Day,
                             shared: true,
                             rollOnFileSizeLimit: true

@@ -19,35 +19,19 @@ namespace PluginDb2
         {
             try
             {
-            
-                // setup logger
-                Logger.Init();
-
-                Logger.Info("Starting Plugin");
                 // configure env
                 var assemblyPath = Assembly.GetExecutingAssembly().Location;
                 var installDirectory = Path.GetDirectoryName(assemblyPath);
 
                 if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LD_LICENSE_PATH")))
                 {
-                    Logger.Info("Found an LD_LICENSE_PATH");
-                    try
-                    {
-                        var licenseSourceDirectory = Environment.GetEnvironmentVariable("LD_LICENSE_PATH");
-                        var licenseTargetDirectory = Path.Join(installDirectory, "/clidriver/license");
-                        Logger.Info($"Setting LD_LICENSE_PATH=${licenseSourceDirectory}");
-                        Logger.Info($"Copying license file to ${licenseTargetDirectory}");
-                        DirectoryCopy(licenseSourceDirectory, licenseTargetDirectory, true);
-                    }
-                    catch(Exception err)
-                    {
-                        Logger.Error(err, $"Could not setup license file");
-                    }
+                    var licenseSourceDirectory = Environment.GetEnvironmentVariable("LD_LICENSE_PATH");
+                    var licenseTargetDirectory = Path.Join(installDirectory, "/clidriver/license");
+                    DirectoryCopy(licenseSourceDirectory, licenseTargetDirectory, true);
                 }
 
                 if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LD_LIBRARY_PATH")) && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    Logger.Info("Using Library Path Requires us to Start a Sub-process, starting sub-process now");
                     Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", $"{installDirectory}/clidriver/lib");
 
                     var proc = new Process
@@ -58,15 +42,15 @@ namespace PluginDb2
                             Arguments = "",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
+                            RedirectStandardError = true,
                             CreateNoWindow = true
                         }
                     };
-                    Logger.Info("Starting Child Process");
+
                     proc.Start();
 
                     while (!proc.StandardOutput.EndOfStream)
                     {
-                        Logger.Info("Started Child Process: Waiting for carriage return to complete");
                         var line = proc.StandardOutput.ReadLine();
                         Console.WriteLine(line);
                     }
@@ -94,6 +78,9 @@ namespace PluginDb2
 
                 Console.WriteLine(output);
 
+                // setup logger
+                Logger.Init();
+                
                 Logger.Info("Started on port " + server.Ports.First().BoundPort);
 
                 // wait to exit until given input
