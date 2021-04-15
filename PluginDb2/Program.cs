@@ -46,14 +46,9 @@ namespace PluginDb2
                             CreateNoWindow = true
                         }
                     };
-
+                    proc.OutputDataReceived += (s, a) => Console.WriteLine("received output: {0}", a.Data);
+                    proc.ErrorDataReceived += (s, a) => Console.WriteLine("received error: {0}", a.Data);
                     proc.Start();
-
-                    while (!proc.StandardOutput.EndOfStream)
-                    {
-                        var line = proc.StandardOutput.ReadLine();
-                        Console.WriteLine(line);
-                    }
                 }
 
                 // Add final chance exception handler
