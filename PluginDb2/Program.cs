@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using Naveego.Sdk.Plugins;
 using PluginDb2.Helper;
+using Serilog;
 
 namespace PluginDb2
 {
@@ -19,6 +20,11 @@ namespace PluginDb2
         {
             try
             {
+                // setup logger
+                Logger.Init();
+                
+                Logger.Info("Starting Db2 Plugin");
+                
                 // configure env
                 var assemblyPath = Assembly.GetExecutingAssembly().Location;
                 var installDirectory = Path.GetDirectoryName(assemblyPath);
@@ -27,11 +33,13 @@ namespace PluginDb2
                 {
                     var licenseSourceDirectory = Environment.GetEnvironmentVariable("LD_LICENSE_PATH");
                     var licenseTargetDirectory = Path.Join(installDirectory, "/clidriver/license");
+                    Logger.Info($"Loading Driver License from '{licenseSourceDirectory}' to '{licenseTargetDirectory}'.");
                     DirectoryCopy(licenseSourceDirectory, licenseTargetDirectory, true);
                 }
 
                 if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LD_LIBRARY_PATH")) && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
+                    Logger.Info("LD_LIBRARY_PATH was not set, spawning process as child.");
                     Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", $"{installDirectory}/clidriver/lib");
 
                     var proc = new Process
@@ -44,16 +52,17 @@ namespace PluginDb2
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
                             CreateNoWindow = true,
-                           
                         }
                     };
+                    proc.EnableRaisingEvents = true;
                     proc.OutputDataReceived += (s, a) => Console.Out.WriteLine(a.Data);
                     proc.ErrorDataReceived += (s, a) => Console.Error.WriteLine(a.Data);
-                    proc.EnableRaisingEvents = true;
-                    proc.BeginErrorReadLine();
-                    proc.BeginOutputReadLine();
+         
                     proc.Start();
 
+                    proc.BeginErrorReadLine();
+                    proc.BeginOutputReadLine();
+                    
                     Task.Run(() =>
                     {
                         // wait to exit until given input
@@ -74,8 +83,11 @@ namespace PluginDb2
                     Logger.Error(null, $"died: {eventArgs.ExceptionObject}");
                     Logger.CloseAndFlush();
                 };
-
                 Logger.Info("Starting Plugin Server");
+                
+                var ldPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH");
+                Logger.Info($"Using LD_LIBRARY_PATH={ldPath}");
+                
                 // create new server and start it
                 Server server = new Server
                 {
@@ -85,14 +97,11 @@ namespace PluginDb2
                 server.Start();
 
                 // write out the connection information for the Hashicorp plugin runner
-                var output = String.Format("{0}|{1}|{2}|{3}:{4}|{5}",
+                var output = string.Format("{0}|{1}|{2}|{3}:{4}|{5}",
                     1, 1, "tcp", "localhost", server.Ports.First().BoundPort, "grpc");
 
                 Console.WriteLine(output);
 
-                // setup logger
-                Logger.Init();
-                
                 Logger.Info("Started on port " + server.Ports.First().BoundPort);
 
                 // wait to exit until given input

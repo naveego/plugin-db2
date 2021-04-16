@@ -4,9 +4,15 @@ using System.Threading;
 using Grpc.Core;
 using Naveego.Sdk.Plugins;
 using Serilog;
+using Serilog.Configuration;
+using Serilog.Core;
+using Serilog.Events;
 
 namespace PluginDb2.Helper
 {
+
+    
+    
     public static class Logger
     {
         private static string _logPrefix = "";
@@ -37,7 +43,7 @@ namespace PluginDb2.Helper
                             shared: true,
                             rollOnFileSizeLimit: true
                         );
-                        sinkConfig.Console();
+                        sinkConfig.StdErrSink();
                     })
                 .CreateLogger();
         }
@@ -163,6 +169,42 @@ namespace PluginDb2.Helper
         public static void SetLogPrefix(string logPrefix)
         {
             _logPrefix = $"<{logPrefix}>";
+        }
+    }
+    
+    public class StdErrSink : ILogEventSink
+    {
+        private readonly IFormatProvider _formatProvider;
+
+        public StdErrSink(IFormatProvider formatProvider)
+        {
+            _formatProvider = formatProvider;
+        }
+        
+        public void Emit(LogEvent logEvent)
+        {
+            var level = GetLevelString(logEvent.Level);
+            Console.Error.WriteLine($"[{level}] {logEvent.RenderMessage(_formatProvider)}");
+        }
+
+        private string GetLevelString(LogEventLevel level) => level switch
+        {
+            LogEventLevel.Debug => "DEBUG",
+            LogEventLevel.Error => "ERROR",
+            LogEventLevel.Fatal => "ERROR",
+            LogEventLevel.Verbose => "TRACE",
+            LogEventLevel.Warning => "WARN",
+            _ => "INFO"
+        };
+
+    }
+
+    public static class StdErrSinkExtensions
+    {
+        public static LoggerConfiguration StdErrSink(this LoggerSinkConfiguration loggerConfiguration,
+            IFormatProvider formatProvider = null)
+        {
+            return loggerConfiguration.Sink(new StdErrSink(formatProvider));
         }
     }
 }

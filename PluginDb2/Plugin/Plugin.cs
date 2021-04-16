@@ -23,6 +23,11 @@ namespace PluginDb2.Plugin
         private TaskCompletionSource<bool> _tcs;
         private IConnectionFactory _connectionFactory;
 
+        public Plugin() : this(null)
+        {
+            
+        }
+
         public Plugin(IConnectionFactory connectionFactory = null)
         {
             _connectionFactory = connectionFactory ?? new ConnectionFactory();
