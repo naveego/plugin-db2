@@ -10,9 +10,6 @@ using Serilog.Events;
 
 namespace PluginDb2.Helper
 {
-
-    
-    
     public static class Logger
     {
         private static string _logPrefix = "";
