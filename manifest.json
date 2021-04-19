@@ -4,7 +4,7 @@
   "description": "Publisher which connects to IBM's DB2 Database",
   "apiVersion": "2",
   "versionDescription": "Version 2",
-  "version": "1.3.9",
+  "version": "1.3.11",
   "iconFile": "icon.png",
   "executable": "PluginDb2",
   "kind": "publisher",

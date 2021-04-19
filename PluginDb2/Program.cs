@@ -9,6 +9,7 @@ using Grpc.Core;
 using Naveego.Sdk.Plugins;
 using PluginDb2.Helper;
 using Serilog;
+using Serilog.Data;
 
 namespace PluginDb2
 {
@@ -31,10 +32,18 @@ namespace PluginDb2
 
                 if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LD_LICENSE_PATH")))
                 {
-                    var licenseSourceDirectory = Environment.GetEnvironmentVariable("LD_LICENSE_PATH");
-                    var licenseTargetDirectory = Path.Join(installDirectory, "/clidriver/license");
-                    Logger.Info($"Loading Driver License from '{licenseSourceDirectory}' to '{licenseTargetDirectory}'.");
-                    DirectoryCopy(licenseSourceDirectory, licenseTargetDirectory, true);
+                    try
+                    {
+                        var licenseSourceDirectory = Environment.GetEnvironmentVariable("LD_LICENSE_PATH");
+                        var licenseTargetDirectory = Path.Join(installDirectory, "/clidriver/license");
+                        Logger.Info(
+                            $"Loading Driver License from '{licenseSourceDirectory}' to '{licenseTargetDirectory}'.");
+                        DirectoryCopy(licenseSourceDirectory, licenseTargetDirectory, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Info($"Issue copying license files, you can probably ignore this: " + ex.Message);
+                    }
                 }
 
                 if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LD_LIBRARY_PATH")) && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -94,6 +103,8 @@ namespace PluginDb2
                     Services = {Publisher.BindService(new Plugin.Plugin())},
                     Ports = {new ServerPort("localhost", 0, ServerCredentials.Insecure)}
                 };
+
+                Logger.Info($"Starting Grpc on port " + server.Ports.First().BoundPort);
                 server.Start();
 
                 // write out the connection information for the Hashicorp plugin runner
@@ -102,7 +113,7 @@ namespace PluginDb2
 
                 Console.WriteLine(output);
 
-                Logger.Info("Started on port " + server.Ports.First().BoundPort);
+                Logger.Info("Started Plugin Server Successfully");
 
                 // wait to exit until given input
                 Console.ReadLine();
