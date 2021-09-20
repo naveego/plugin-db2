@@ -163,7 +163,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
             try
             {
                 // add sample and count
-                var records = Read.Read.ReadRecords(connFactory, schema).Take(sampleSize);
+                var records = Read.Read.ReadRecords(connFactory, schema, sampleSize).Take(sampleSize);
                 schema.Sample.AddRange(await records.ToListAsync());
                 schema.Count = await GetCountOfRecords(connFactory, schema);
 

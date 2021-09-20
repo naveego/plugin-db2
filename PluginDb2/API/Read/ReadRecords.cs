@@ -9,7 +9,7 @@ namespace PluginDb2.API.Read
 {
     public static partial class Read
     {
-        public static async IAsyncEnumerable<Record> ReadRecords(IConnectionFactory connFactory, Schema schema)
+        public static async IAsyncEnumerable<Record> ReadRecords(IConnectionFactory connFactory, Schema schema, int limit = -1)
         {
             var conn = connFactory.GetConnection();
             await conn.OpenAsync();
@@ -19,6 +19,11 @@ namespace PluginDb2.API.Read
             if (string.IsNullOrWhiteSpace(query))
             {
                 query = $"SELECT * FROM {schema.Id}";
+            }
+
+            if (limit >= 0)
+            {
+                query = $"SELECT * FROM ({query}) LIMIT {limit}";
             }
 
             var cmd = connFactory.GetCommand(query, conn);

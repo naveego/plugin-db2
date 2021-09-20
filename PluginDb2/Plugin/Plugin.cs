@@ -260,7 +260,7 @@ namespace PluginDb2.Plugin
 
                 Logger.SetLogPrefix(jobId);
 
-                var records = Read.ReadRecords(_connectionFactory, schema);
+                var records = Read.ReadRecords(_connectionFactory, schema, limitFlag ? Convert.ToInt32(limit) : -1);
 
                 await foreach (var record in records)
                 {
