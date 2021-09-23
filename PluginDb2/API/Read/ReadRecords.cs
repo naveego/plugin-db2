@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Naveego.Sdk.Plugins;
 using Newtonsoft.Json;
 using PluginDb2.API.Factory;
@@ -23,7 +24,8 @@ namespace PluginDb2.API.Read
 
             if (limit >= 0)
             {
-                query = $"SELECT * FROM ({query}) LIMIT {limit}";
+                query = Regex.Replace(query, @"([Ll][Ii][Mm][Ii][Tt] \d+)", $"");
+                query = $"{query} LIMIT {limit}";
             }
 
             var cmd = connFactory.GetCommand(query, conn);
