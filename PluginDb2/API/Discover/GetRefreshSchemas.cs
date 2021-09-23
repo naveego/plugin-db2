@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Google.Protobuf.Collections;
 using Naveego.Sdk.Plugins;
 using PluginDb2.API.Factory;
@@ -24,7 +25,15 @@ namespace PluginDb2.API.Discover
                     continue;
                 }
 
-                var cmd = connFactory.GetCommand(schema.Query, conn);
+                var query = schema.Query;
+                
+                if (sampleSize >= 0)
+                {
+                    query = Regex.Replace(query, @"([Ll][Ii][Mm][Ii][Tt] \d+)", $"");
+                    query = $"{query} LIMIT {sampleSize}";
+                }
+
+                var cmd = connFactory.GetCommand(query, conn);
 
                 var reader = await cmd.ExecuteReaderAsync();
                 var schemaTable = reader.GetSchemaTable();
