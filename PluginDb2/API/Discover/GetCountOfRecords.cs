@@ -9,36 +9,41 @@ namespace PluginDb2.API.Discover
     {
         public static async Task<Count> GetCountOfRecords(IConnectionFactory connFactory, Schema schema)
         {
-            var query = schema.Query;
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                query = $"SELECT * FROM {schema.Id}";
-            }
-
             var conn = connFactory.GetConnection();
-            await conn.OpenAsync();
-
-            var cmd = connFactory.GetCommand($"SELECT COUNT(*) as count FROM ({query}) as q", conn);
-            var reader = await cmd.ExecuteReaderAsync();
-
-            var count = -1;
-            while (await reader.ReadAsync())
+            try
             {
-                count = Convert.ToInt32(reader.GetValueById("count"));
-            }
-
-            await conn.CloseAsync();
-
-            return count == -1
-                ? new Count
+                var query = schema.Query;
+                if (string.IsNullOrWhiteSpace(query))
                 {
-                    Kind = Count.Types.Kind.Unavailable,
+                    query = $"SELECT * FROM {schema.Id}";
                 }
-                : new Count
+                
+                await conn.OpenAsync();
+
+                var cmd = connFactory.GetCommand($"SELECT COUNT(*) as count FROM ({query}) as q", conn);
+                var reader = await cmd.ExecuteReaderAsync();
+
+                var count = -1;
+                while (await reader.ReadAsync())
                 {
-                    Kind = Count.Types.Kind.Exact,
-                    Value = count
-                };
+                    count = Convert.ToInt32(reader.GetValueById("count"));
+                }
+
+                return count == -1
+                    ? new Count
+                    {
+                        Kind = Count.Types.Kind.Unavailable,
+                    }
+                    : new Count
+                    {
+                        Kind = Count.Types.Kind.Exact,
+                        Value = count
+                    };
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
         }
     }
 }

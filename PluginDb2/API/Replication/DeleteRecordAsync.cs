@@ -13,20 +13,26 @@ WHERE {2} = '{3}'";
             string primaryKeyValue)
         {
             var conn = connFactory.GetConnection();
-            await conn.OpenAsync();
 
-            var cmd = connFactory.GetCommand(string.Format(DeleteRecordQuery,
-                    Utility.Utility.GetSafeName(table.SchemaName, '"'),
-                    Utility.Utility.GetSafeName(table.TableName, '"'),
-                    Utility.Utility.GetSafeName(table.Columns.Find(c => c.PrimaryKey == true).ColumnName, '"'),
-                    primaryKeyValue
-                ),
-                conn);
+            try
+            {
+                await conn.OpenAsync();
 
-            // check if table exists
-            await cmd.ExecuteNonQueryAsync();
+                var cmd = connFactory.GetCommand(string.Format(DeleteRecordQuery,
+                        Utility.Utility.GetSafeName(table.SchemaName, '"'),
+                        Utility.Utility.GetSafeName(table.TableName, '"'),
+                        Utility.Utility.GetSafeName(table.Columns.Find(c => c.PrimaryKey == true).ColumnName, '"'),
+                        primaryKeyValue
+                    ),
+                    conn);
 
-            await conn.CloseAsync();
+                // check if table exists
+                await cmd.ExecuteNonQueryAsync();
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
         }
     }
 }

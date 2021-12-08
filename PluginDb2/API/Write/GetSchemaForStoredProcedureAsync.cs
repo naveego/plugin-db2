@@ -23,40 +23,46 @@ where proc.""ROUTINESCHEMA"" = '{0}'
         public static async Task<Schema> GetSchemaForStoredProcedureAsync(IConnectionFactory connFactory,
             WriteStoredProcedure storedProcedure)
         {
-            var schema = new Schema
-            {
-                Id = storedProcedure.GetId(),
-                Name = storedProcedure.GetId(),
-                Description = "",
-                DataFlowDirection = Schema.Types.DataFlowDirection.Write,
-                Query = storedProcedure.GetId()
-            };
-
             var conn = connFactory.GetConnection();
-            await conn.OpenAsync();
 
-            var cmd = connFactory.GetCommand(
-                string.Format(GetStoredProcedureParamsQuery, storedProcedure.SchemaName, storedProcedure.SpecificName),
-                conn);
-            var reader = await cmd.ExecuteReaderAsync();
-
-            while (await reader.ReadAsync())
+            try
             {
-                var property = new Property
+                var schema = new Schema
                 {
-                    Id = reader.GetValueById(ParamName).ToString(),
-                    Name = reader.GetValueById(ParamName).ToString(),
+                    Id = storedProcedure.GetId(),
+                    Name = storedProcedure.GetId(),
                     Description = "",
-                    Type = Discover.Discover.GetType(reader.GetValueById(DataType).ToString()),
-                    TypeAtSource = reader.GetValueById(DataType).ToString()
+                    DataFlowDirection = Schema.Types.DataFlowDirection.Write,
+                    Query = storedProcedure.GetId()
                 };
+            
+                await conn.OpenAsync();
 
-                schema.Properties.Add(property);
+                var cmd = connFactory.GetCommand(
+                    string.Format(GetStoredProcedureParamsQuery, storedProcedure.SchemaName, storedProcedure.SpecificName),
+                    conn);
+                var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var property = new Property
+                    {
+                        Id = reader.GetValueById(ParamName).ToString(),
+                        Name = reader.GetValueById(ParamName).ToString(),
+                        Description = "",
+                        Type = Discover.Discover.GetType(reader.GetValueById(DataType).ToString()),
+                        TypeAtSource = reader.GetValueById(DataType).ToString()
+                    };
+
+                    schema.Properties.Add(property);
+                }
+            
+                return schema;
             }
-
-            await conn.CloseAsync();
-
-            return schema;
+            finally
+            {
+                await conn.CloseAsync();
+            }
         }
     }
 }

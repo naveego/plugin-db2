@@ -17,6 +17,8 @@ namespace PluginDb2.API.Replication
             string jobId,
             ReplicationTable table)
         {
+            var conn = connFactory.GetConnection();
+            
             try
             {
                 ReplicationMetaData replicationMetaData = null;
@@ -25,13 +27,12 @@ namespace PluginDb2.API.Replication
                 await EnsureTableAsync(connFactory, table);
 
                 // check if metadata exists
-                var conn = connFactory.GetConnection();
                 await conn.OpenAsync();
 
                 var cmd = connFactory.GetCommand(
-                    string.Format(GetMetaDataQuery, 
+                    string.Format(GetMetaDataQuery,
                         Utility.Utility.GetSafeName(table.SchemaName, '"'),
-                        Utility.Utility.GetSafeName(table.TableName, '"'), 
+                        Utility.Utility.GetSafeName(table.TableName, '"'),
                         Utility.Utility.GetSafeName(Constants.ReplicationMetaDataJobId),
                         jobId),
                     conn);
@@ -41,7 +42,7 @@ namespace PluginDb2.API.Replication
                 {
                     // metadata exists
                     await reader.ReadAsync();
-                    
+
                     var request = JsonConvert.DeserializeObject<PrepareWriteRequest>(
                         reader.GetValueById(Constants.ReplicationMetaDataRequest).ToString());
                     var shapeName = reader.GetValueById(Constants.ReplicationMetaDataReplicatedShapeName)
@@ -50,7 +51,7 @@ namespace PluginDb2.API.Replication
                         .ToString();
                     var timestamp = DateTime.Parse(reader.GetValueById(Constants.ReplicationMetaDataTimestamp)
                         .ToString());
-                    
+
                     replicationMetaData = new ReplicationMetaData
                     {
                         Request = request,
@@ -59,15 +60,17 @@ namespace PluginDb2.API.Replication
                         Timestamp = timestamp
                     };
                 }
-
-                await conn.CloseAsync();
-
+                
                 return replicationMetaData;
             }
             catch (Exception e)
             {
                 Logger.Error(e, e.Message);
                 throw;
+            }
+            finally
+            {
+                await conn.CloseAsync();
             }
         }
     }

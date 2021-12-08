@@ -70,8 +70,6 @@ namespace PluginDb2.API.Write
 
                 await cmd.ExecuteNonQueryAsync();
 
-                await conn.CloseAsync();
-
                 var ack = new RecordAck
                 {
                     CorrelationId = record.CorrelationId,
@@ -104,6 +102,7 @@ namespace PluginDb2.API.Write
             }
             finally
             {
+                await conn.CloseAsync();
                 WriteSemaphoreSlim.Release();
             }
         }

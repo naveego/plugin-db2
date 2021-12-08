@@ -75,85 +75,91 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
             int sampleSize = 5)
         {
             var conn = connFactory.GetConnection();
-            await conn.OpenAsync();
 
-            string query;
-
-            switch (settings.Mode)
+            try
             {
-                case Constants.ModeISeries:
-                    query = string.Format(
-                        GetAllTablesAndColumnsQuery_ISeries,
-                        settings?.DiscoveryLibraries != null && settings?.DiscoveryLibraries.Count > 0 ?
-                        $"AND t.DBNAME IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
-                        : ""
-                    );
-                    break;
-                case Constants.ModeZOS:
-                case Constants.ModeLUW:
-                default:
-                    query = string.Format(
-                        GetAllTablesAndColumnsQuery_LUW,
-                        settings?.DiscoveryLibraries != null && settings.DiscoveryLibraries?.Count > 0 ?
-                            $"AND t.CREATOR IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
-                            : "",
-                        settings?.DiscoveryLibraries != null && settings?.DiscoveryLibraries.Count > 0 ?
-                            $"AND t.CREATOR IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
-                            : ""
-                    );
-                    break;
-            }
+                await conn.OpenAsync();
 
-            var cmd = connFactory.GetCommand(query, conn);
-            var reader = await cmd.ExecuteReaderAsync();
+                string query;
 
-            Schema schema = null;
-            var currentSchemaId = "";
-            while (await reader.ReadAsync())
-            {
-                var schemaId =
-                    $"{Utility.Utility.GetSafeName(reader.GetValueById(TableSchema).ToString(), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(TableName).ToString(), '"')}";
-                if (schemaId != currentSchemaId)
+                switch (settings.Mode)
                 {
-                    // return previous schema
-                    if (schema != null)
-                    {
-                        // get sample and count
-                        yield return await AddSampleAndCount(connFactory, schema, sampleSize);
-                    }
-
-                    // start new schema
-                    currentSchemaId = schemaId;
-                    var parts = DecomposeSafeName(currentSchemaId).TrimEscape();
-                    schema = new Schema
-                    {
-                        Id = currentSchemaId,
-                        Name = $"{parts.Schema}.{parts.Table}",
-                        Properties = { },
-                        DataFlowDirection = Schema.Types.DataFlowDirection.Read
-                    };
+                    case Constants.ModeISeries:
+                        query = string.Format(
+                            GetAllTablesAndColumnsQuery_ISeries,
+                            settings?.DiscoveryLibraries != null && settings?.DiscoveryLibraries.Count > 0
+                                ? $"AND t.DBNAME IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
+                                : ""
+                        );
+                        break;
+                    case Constants.ModeZOS:
+                    case Constants.ModeLUW:
+                    default:
+                        query = string.Format(
+                            GetAllTablesAndColumnsQuery_LUW,
+                            settings?.DiscoveryLibraries != null && settings.DiscoveryLibraries?.Count > 0
+                                ? $"AND t.CREATOR IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
+                                : "",
+                            settings?.DiscoveryLibraries != null && settings?.DiscoveryLibraries.Count > 0
+                                ? $"AND t.CREATOR IN ('{string.Join("','", settings.DiscoveryLibraries.Select(i => i.Replace("'", "''")))}')"
+                                : ""
+                        );
+                        break;
                 }
 
-                // add column to schema
-                var property = new Property
+                var cmd = connFactory.GetCommand(query, conn);
+                var reader = await cmd.ExecuteReaderAsync();
+
+                Schema schema = null;
+                var currentSchemaId = "";
+                while (await reader.ReadAsync())
                 {
-                    Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName)?.ToString()),
-                    Name = reader.GetValueById(ColumnName)?.ToString(),
-                    IsKey = reader.GetValueById(ColumnKey)?.ToString() == "1",
-                    IsNullable = reader.GetValueById(IsNullable)?.ToString() == "Y",
-                    Type = GetType(reader.GetValueById(DataType)?.ToString()),
-                    TypeAtSource = GetTypeAtSource(reader.GetValueById(DataType)?.ToString(),
-                        reader.GetValueById(CharacterMaxLength))
-                };
-                schema?.Properties.Add(property);
+                    var schemaId =
+                        $"{Utility.Utility.GetSafeName(reader.GetValueById(TableSchema).ToString(), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(TableName).ToString(), '"')}";
+                    if (schemaId != currentSchemaId)
+                    {
+                        // return previous schema
+                        if (schema != null)
+                        {
+                            // get sample and count
+                            yield return await AddSampleAndCount(connFactory, schema, sampleSize);
+                        }
+
+                        // start new schema
+                        currentSchemaId = schemaId;
+                        var parts = DecomposeSafeName(currentSchemaId).TrimEscape();
+                        schema = new Schema
+                        {
+                            Id = currentSchemaId,
+                            Name = $"{parts.Schema}.{parts.Table}",
+                            Properties = { },
+                            DataFlowDirection = Schema.Types.DataFlowDirection.Read
+                        };
+                    }
+
+                    // add column to schema
+                    var property = new Property
+                    {
+                        Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName)?.ToString()),
+                        Name = reader.GetValueById(ColumnName)?.ToString(),
+                        IsKey = reader.GetValueById(ColumnKey)?.ToString() == "1",
+                        IsNullable = reader.GetValueById(IsNullable)?.ToString() == "Y",
+                        Type = GetType(reader.GetValueById(DataType)?.ToString()),
+                        TypeAtSource = GetTypeAtSource(reader.GetValueById(DataType)?.ToString(),
+                            reader.GetValueById(CharacterMaxLength))
+                    };
+                    schema?.Properties.Add(property);
+                }
+
+                if (schema != null)
+                {
+                    // get sample and count
+                    yield return await AddSampleAndCount(connFactory, schema, sampleSize);
+                }
             }
-
-            await conn.CloseAsync();
-
-            if (schema != null)
+            finally
             {
-                // get sample and count
-                yield return await AddSampleAndCount(connFactory, schema, sampleSize);
+                await conn.CloseAsync();
             }
         }
 

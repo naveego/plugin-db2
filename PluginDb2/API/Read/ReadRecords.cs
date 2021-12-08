@@ -10,87 +10,94 @@ namespace PluginDb2.API.Read
 {
     public static partial class Read
     {
-        public static async IAsyncEnumerable<Record> ReadRecords(IConnectionFactory connFactory, Schema schema, int limit = -1)
+        public static async IAsyncEnumerable<Record> ReadRecords(IConnectionFactory connFactory, Schema schema,
+            int limit = -1)
         {
             var conn = connFactory.GetConnection();
-            await conn.OpenAsync();
-
-            var query = schema.Query;
-
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                query = $"SELECT * FROM {schema.Id}";
-            }
-
-            if (limit >= 0)
-            {
-                query = Regex.Replace(query, @"([Ll][Ii][Mm][Ii][Tt] \d+)", $"");
-                query = $"{query} LIMIT {limit}";
-            }
-
-            var cmd = connFactory.GetCommand(query, conn);
-            IReader reader;
 
             try
             {
-                reader = await cmd.ExecuteReaderAsync();
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e, e.Message);
-                yield break;
-            }
+                await conn.OpenAsync();
 
-            if (reader.HasRows())
-            {
-                while (await reader.ReadAsync())
+                var query = schema.Query;
+
+                if (string.IsNullOrWhiteSpace(query))
                 {
-                    var recordMap = new Dictionary<string, object>();
+                    query = $"SELECT * FROM {schema.Id}";
+                }
 
-                    foreach (var property in schema.Properties)
+                if (limit >= 0)
+                {
+                    query = Regex.Replace(query, @"([Ll][Ii][Mm][Ii][Tt] \d+)", $"");
+                    query = $"{query} LIMIT {limit}";
+                }
+
+                var cmd = connFactory.GetCommand(query, conn);
+                IReader reader;
+
+                try
+                {
+                    reader = await cmd.ExecuteReaderAsync();
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e, e.Message);
+                    yield break;
+                }
+
+                if (reader.HasRows())
+                {
+                    while (await reader.ReadAsync())
                     {
-                        try
-                        {
-                            var rawValue = reader.GetValueById(property.Id, '"');
+                        var recordMap = new Dictionary<string, object>();
 
-                            if (rawValue is DBNull)
+                        foreach (var property in schema.Properties)
+                        {
+                            try
                             {
-                                recordMap[property.Id] = null;
-                            }
-                            else
-                            {
-                                switch (property.Type)
+                                var rawValue = reader.GetValueById(property.Id, '"');
+
+                                if (rawValue is DBNull)
                                 {
-                                    case PropertyType.String:
-                                    case PropertyType.Text:
-                                    case PropertyType.Decimal:
-                                        recordMap[property.Id] = rawValue.ToString();
-                                        break;
-                                    default:
-                                        recordMap[property.Id] = rawValue;
-                                        break;
+                                    recordMap[property.Id] = null;
+                                }
+                                else
+                                {
+                                    switch (property.Type)
+                                    {
+                                        case PropertyType.String:
+                                        case PropertyType.Text:
+                                        case PropertyType.Decimal:
+                                            recordMap[property.Id] = rawValue.ToString();
+                                            break;
+                                        default:
+                                            recordMap[property.Id] = rawValue;
+                                            break;
+                                    }
                                 }
                             }
+                            catch (Exception e)
+                            {
+                                Logger.Error(e, $"No column with property Id: {property.Id}");
+                                Logger.Error(e, e.Message);
+                                recordMap[property.Id] = null;
+                            }
                         }
-                        catch (Exception e)
+
+                        var record = new Record
                         {
-                            Logger.Error(e, $"No column with property Id: {property.Id}");
-                            Logger.Error(e, e.Message);
-                            recordMap[property.Id] = null;
-                        }
+                            Action = Record.Types.Action.Upsert,
+                            DataJson = JsonConvert.SerializeObject(recordMap)
+                        };
+
+                        yield return record;
                     }
-
-                    var record = new Record
-                    {
-                        Action = Record.Types.Action.Upsert,
-                        DataJson = JsonConvert.SerializeObject(recordMap)
-                    };
-
-                    yield return record;
                 }
             }
-
-            await conn.CloseAsync();
+            finally
+            {
+                await conn.CloseAsync();
+            }
         }
     }
 }

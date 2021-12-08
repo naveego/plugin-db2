@@ -16,10 +16,11 @@ namespace PluginDb2.API.Replication
             Dictionary<string, object> recordMap)
         {
             var conn = connFactory.GetConnection();
-            await conn.OpenAsync();
 
             try
             {
+                await conn.OpenAsync();
+
                 // try to insert
                 var querySb =
                     new StringBuilder(
@@ -124,8 +125,10 @@ namespace PluginDb2.API.Replication
                     throw;
                 }
             }
-
-            await conn.CloseAsync();
+            finally
+            {
+                await conn.CloseAsync();
+            }
         }
     }
 }

@@ -24,7 +24,7 @@ VALUES (
 , '{{5}}'
 , '{{6}}'
 )";
-        
+
         private static readonly string UpdateMetaDataQuery = $@"UPDATE {{0}}.{{1}}
 SET 
 {Utility.Utility.GetSafeName(Constants.ReplicationMetaDataRequest)} = '{{2}}'
@@ -32,57 +32,64 @@ SET
 , {Utility.Utility.GetSafeName(Constants.ReplicationMetaDataReplicatedShapeName)} = '{{4}}'
 , {Utility.Utility.GetSafeName(Constants.ReplicationMetaDataTimestamp)} = '{{5}}'
 WHERE {Utility.Utility.GetSafeName(Constants.ReplicationMetaDataJobId)} = '{{6}}'";
-        
-        public static async Task UpsertReplicationMetaDataAsync(IConnectionFactory connFactory, ReplicationTable table, ReplicationMetaData metaData)
+
+        public static async Task UpsertReplicationMetaDataAsync(IConnectionFactory connFactory, ReplicationTable table,
+            ReplicationMetaData metaData)
         {
             var conn = connFactory.GetConnection();
-            await conn.OpenAsync();
-            
+
             try
             {
-                // try to insert
-                var cmd = connFactory.GetCommand(
-                    string.Format(InsertMetaDataQuery, 
-                        Utility.Utility.GetSafeName(table.SchemaName, '"'),
-                        Utility.Utility.GetSafeName(table.TableName, '"'), 
-                        metaData.Request.DataVersions.JobId,
-                        JsonConvert.SerializeObject(metaData.Request),
-                        metaData.ReplicatedShapeId,
-                        metaData.ReplicatedShapeName,
-                        metaData.Timestamp
-                        ),
-                    conn);
+                await conn.OpenAsync();
 
-                await cmd.ExecuteNonQueryAsync();
-            }
-            catch (Exception e)
-            {
                 try
                 {
-                    // update if it failed
+                    // try to insert
                     var cmd = connFactory.GetCommand(
-                        string.Format(UpdateMetaDataQuery, 
+                        string.Format(InsertMetaDataQuery,
                             Utility.Utility.GetSafeName(table.SchemaName, '"'),
                             Utility.Utility.GetSafeName(table.TableName, '"'),
+                            metaData.Request.DataVersions.JobId,
                             JsonConvert.SerializeObject(metaData.Request),
                             metaData.ReplicatedShapeId,
                             metaData.ReplicatedShapeName,
-                            metaData.Timestamp,
-                            metaData.Request.DataVersions.JobId
+                            metaData.Timestamp
                         ),
                         conn);
-                
+
                     await cmd.ExecuteNonQueryAsync();
                 }
-                catch (Exception exception)
+                catch (Exception e)
                 {
-                    Logger.Error(e, $"Error Insert: {e.Message}");
-                    Logger.Error(exception, $"Error Update: {exception.Message}");
-                    throw;
+                    try
+                    {
+                        // update if it failed
+                        var cmd = connFactory.GetCommand(
+                            string.Format(UpdateMetaDataQuery,
+                                Utility.Utility.GetSafeName(table.SchemaName, '"'),
+                                Utility.Utility.GetSafeName(table.TableName, '"'),
+                                JsonConvert.SerializeObject(metaData.Request),
+                                metaData.ReplicatedShapeId,
+                                metaData.ReplicatedShapeName,
+                                metaData.Timestamp,
+                                metaData.Request.DataVersions.JobId
+                            ),
+                            conn);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                    catch (Exception exception)
+                    {
+                        Logger.Error(e, $"Error Insert: {e.Message}");
+                        Logger.Error(exception, $"Error Update: {exception.Message}");
+                        throw;
+                    }
                 }
             }
-
-            await conn.CloseAsync();
+            finally
+            {
+                await conn.CloseAsync();
+            }
         }
     }
 }

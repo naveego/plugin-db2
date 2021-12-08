@@ -20,28 +20,34 @@ select ""ROUTINESCHEMA"", ""ROUTINENAME"", ""SPECIFICNAME""
         
         public static async Task<List<WriteStoredProcedure>> GetAllStoredProceduresAsync(IConnectionFactory connFactory)
         {
-            var storedProcedures = new List<WriteStoredProcedure>();
             var conn = connFactory.GetConnection();
-            await conn.OpenAsync();
 
-            var cmd = connFactory.GetCommand(GetAllStoredProceduresQuery, conn);
-            var reader = await cmd.ExecuteReaderAsync();
-
-            while (await reader.ReadAsync())
+            try
             {
-                var storedProcedure = new WriteStoredProcedure
-                {
-                    SchemaName = reader.GetValueById(SchemaName).ToString(),
-                    RoutineName = reader.GetValueById(RoutineName).ToString(),
-                    SpecificName = reader.GetValueById(SpecificName).ToString()
-                };
-                
-                storedProcedures.Add(storedProcedure);
-            }
-            
-            await conn.CloseAsync();
+                var storedProcedures = new List<WriteStoredProcedure>();
+                await conn.OpenAsync();
 
-            return storedProcedures;
+                var cmd = connFactory.GetCommand(GetAllStoredProceduresQuery, conn);
+                var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var storedProcedure = new WriteStoredProcedure
+                    {
+                        SchemaName = reader.GetValueById(SchemaName).ToString(),
+                        RoutineName = reader.GetValueById(RoutineName).ToString(),
+                        SpecificName = reader.GetValueById(SpecificName).ToString()
+                    };
+                
+                    storedProcedures.Add(storedProcedure);
+                }
+            
+                return storedProcedures;
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
         }
     }
 }

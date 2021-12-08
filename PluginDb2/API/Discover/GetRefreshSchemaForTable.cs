@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,40 +27,46 @@ WHERE t.TYPE = 'T' and t.CREATOR = '{0}' and t.NAME = '{1}'";
         public static async Task<Schema> GetRefreshSchemaForTable(IConnectionFactory connFactory, Schema schema,
             int sampleSize = 5)
         {
-            var decomposed = DecomposeSafeName(schema.Id).TrimEscape();
             var conn = connFactory.GetConnection();
 
-            await conn.OpenAsync();
-
-            var cmd = connFactory.GetCommand(
-                string.Format(GetTableAndColumnsQuery, decomposed.Schema, decomposed.Table), conn);
-            var reader = await cmd.ExecuteReaderAsync();
-            var refreshProperties = new List<Property>();
-
-            while (await reader.ReadAsync())
+            try
             {
-                // add column to refreshProperties
-                var property = new Property
+                var decomposed = DecomposeSafeName(schema.Id).TrimEscape();
+            
+                await conn.OpenAsync();
+
+                var cmd = connFactory.GetCommand(
+                    string.Format(GetTableAndColumnsQuery, decomposed.Schema, decomposed.Table), conn);
+                var reader = await cmd.ExecuteReaderAsync();
+                var refreshProperties = new List<Property>();
+
+                while (await reader.ReadAsync())
                 {
-                    Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName).ToString(), '"'),
-                    Name = reader.GetValueById(ColumnName).ToString(),
-                    IsKey = reader.GetValueById(ColumnKey).ToString() == "1",
-                    IsNullable = reader.GetValueById(IsNullable).ToString() == "Y",
-                    Type = GetType(reader.GetValueById(DataType).ToString()),
-                    TypeAtSource = GetTypeAtSource(reader.GetValueById(DataType).ToString(),
-                        reader.GetValueById(CharacterMaxLength))
-                };
-                refreshProperties.Add(property);
+                    // add column to refreshProperties
+                    var property = new Property
+                    {
+                        Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName).ToString(), '"'),
+                        Name = reader.GetValueById(ColumnName).ToString(),
+                        IsKey = reader.GetValueById(ColumnKey).ToString() == "1",
+                        IsNullable = reader.GetValueById(IsNullable).ToString() == "Y",
+                        Type = GetType(reader.GetValueById(DataType).ToString()),
+                        TypeAtSource = GetTypeAtSource(reader.GetValueById(DataType).ToString(),
+                            reader.GetValueById(CharacterMaxLength))
+                    };
+                    refreshProperties.Add(property);
+                }
+
+                // add properties
+                schema.Properties.Clear();
+                schema.Properties.AddRange(refreshProperties);
+            
+                // get sample and count
+                return await AddSampleAndCount(connFactory, schema, sampleSize);
             }
-
-            // add properties
-            schema.Properties.Clear();
-            schema.Properties.AddRange(refreshProperties);
-
-            await conn.CloseAsync();
-
-            // get sample and count
-            return await AddSampleAndCount(connFactory, schema, sampleSize);
+            finally
+            {
+                await conn.CloseAsync();
+            }
         }
 
         private static DecomposeResponse DecomposeSafeName(string schemaId)
