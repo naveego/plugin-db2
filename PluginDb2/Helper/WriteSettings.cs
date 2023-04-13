@@ -1,4 +1,4 @@
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 
 namespace PluginDb2.Helper
 {

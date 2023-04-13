@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using Grpc.Core;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using Serilog;
 using Serilog.Configuration;
 using Serilog.Core;

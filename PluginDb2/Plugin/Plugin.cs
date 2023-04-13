@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Grpc.Core;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using Newtonsoft.Json;
 using PluginDb2.API.Discover;
 using PluginDb2.API.Factory;
@@ -238,6 +238,17 @@ namespace PluginDb2.Plugin
                 Logger.Error(e, e.Message, context);
                 return new DiscoverSchemasResponse();
             }
+        }
+
+        /// <summary>
+        /// Discovers related entities to input schemas
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override Task<DiscoverRelatedEntitiesResponse> DiscoverRelatedEntities(DiscoverRelatedEntitiesRequest request, ServerCallContext context)
+        {
+            return base.DiscoverRelatedEntities(request, context);
         }
 
         /// <summary>

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using Newtonsoft.Json;
 using PluginDb2.DataContracts;
 using PluginDb2.Helper;
 using Xunit;
-using Record = Naveego.Sdk.Plugins.Record;
+using Record = Aunalytics.Sdk.Plugins.Record;
 
 namespace PluginDb2.Plugin
 {
@@ -18,11 +18,11 @@ namespace PluginDb2.Plugin
         {
             return new Settings
             {
-                Server = "",
-                Port = 50001,
-                Database = "",
-                Username = "",
-                Password = ""
+                Server = "augrdb2test.aunsight.com",
+                Port = 50000,
+                Database = "TESTDB",
+                Username = "DB2INST1",
+                Password = "vHlX0c589h"
             };
         }
 
