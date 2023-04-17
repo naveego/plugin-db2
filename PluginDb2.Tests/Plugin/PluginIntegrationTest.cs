@@ -18,11 +18,11 @@ namespace PluginDb2.Plugin
         {
             return new Settings
             {
-                Server = "augrdb2test.aunsight.com",
+                Server = "",
                 Port = 50000,
-                Database = "TESTDB",
-                Username = "DB2INST1",
-                Password = "vHlX0c589h"
+                Database = "",
+                Username = "",
+                Password = ""
             };
         }
 

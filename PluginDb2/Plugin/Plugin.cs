@@ -246,9 +246,32 @@ namespace PluginDb2.Plugin
         /// <param name="request"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        public override Task<DiscoverRelatedEntitiesResponse> DiscoverRelatedEntities(DiscoverRelatedEntitiesRequest request, ServerCallContext context)
+        public override async Task<DiscoverRelatedEntitiesResponse> DiscoverRelatedEntities(DiscoverRelatedEntitiesRequest request, ServerCallContext context)
         {
-            return base.DiscoverRelatedEntities(request, context);
+            Logger.SetLogPrefix("discover-related");
+            Logger.Info("Discovering Related Entities...");
+
+            var inputSchemas = request.ToRelate;
+
+            var discoverRelatedEntitiesResponse = new DiscoverRelatedEntitiesResponse();
+            
+            try
+            {
+                Logger.Info($"Related entity schemas attempted: {inputSchemas.Count}");
+
+                var relatedEntities = Discover.GetAllRelatedEntities(_connectionFactory, _server.Settings, inputSchemas);
+
+                discoverRelatedEntitiesResponse.RelatedEntities.AddRange(await relatedEntities.ToListAsync());
+
+                // return all related entities 
+                Logger.Info($"Related entities returned: {discoverRelatedEntitiesResponse.RelatedEntities.Count}");
+                return discoverRelatedEntitiesResponse;
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, e.Message, context);
+                return new DiscoverRelatedEntitiesResponse();
+            }
         }
 
         /// <summary>

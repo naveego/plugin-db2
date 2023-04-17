@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Naveego.Sdk.Testing;
+using Aunalytics.Sdk.Testing;
 using PluginDb2.Helper;
 
 namespace PluginDb2.TestConsole
