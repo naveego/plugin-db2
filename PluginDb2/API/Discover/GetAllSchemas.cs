@@ -115,7 +115,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                 while (await reader.ReadAsync())
                 {
                     var schemaId =
-                        $"{Utility.Utility.GetSafeName(reader.GetValueById(TableSchema).ToString(), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(TableName).ToString(), '"')}";
+                        $"{Utility.Utility.GetSafeName(reader.GetValueById(TableSchema).ToString()?.Trim(' '), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(TableName).ToString()?.Trim(' '), '"')}";
                     if (schemaId != currentSchemaId)
                     {
                         // return previous schema
@@ -140,8 +140,8 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                     // add column to schema
                     var property = new Property
                     {
-                        Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName)?.ToString()),
-                        Name = reader.GetValueById(ColumnName)?.ToString(),
+                        Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName)?.ToString()?.Trim(' ')),
+                        Name = reader.GetValueById(ColumnName)?.ToString()?.Trim(' '),
                         IsKey = reader.GetValueById(ColumnKey)?.ToString() == "1",
                         IsNullable = reader.GetValueById(IsNullable)?.ToString() == "Y",
                         Type = GetType(reader.GetValueById(DataType)?.ToString()),

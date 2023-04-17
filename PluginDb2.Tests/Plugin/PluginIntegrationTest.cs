@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using Aunalytics.Sdk.Plugins;
 using Newtonsoft.Json;
+using PluginDb2.API.Utility;
 using PluginDb2.DataContracts;
 using PluginDb2.Helper;
 using Xunit;
@@ -22,7 +23,10 @@ namespace PluginDb2.Plugin
                 Port = 50000,
                 Database = "",
                 Username = "",
-                Password = ""
+                Password = "",
+                Mode = Constants.ModeLUW,
+                DiscoveryLibraries = null,
+                DisableDiscovery = false,
             };
         }
 
@@ -292,6 +296,57 @@ namespace PluginDb2.Plugin
             Assert.Equal(PropertyType.String, property.Type);
             Assert.False(property.IsKey);
             Assert.True(property.IsNullable);
+
+            // cleanup
+            await channel.ShutdownAsync();
+            await server.ShutdownAsync();
+        }
+        
+        [Fact]
+        public async Task DiscoverRelatedEntitiesTest()
+        {
+            // setup
+            Server server = new Server
+            {
+                Services = {Publisher.BindService(new PluginDb2.Plugin.Plugin())},
+                Ports = {new ServerPort("localhost", 0, ServerCredentials.Insecure)}
+            };
+            server.Start();
+
+            var port = server.Ports.First().BoundPort;
+
+            var channel = new Channel($"localhost:{port}", ChannelCredentials.Insecure);
+            var client = new Publisher.PublisherClient(channel);
+
+            var connectRequest = GetConnectSettings();
+
+            var discoverRequest = new DiscoverSchemasRequest
+            {
+                Mode = DiscoverSchemasRequest.Types.Mode.All,
+                SampleSize = 10
+            };
+
+            // act
+            client.Connect(connectRequest);
+            var discoverResponse = client.DiscoverSchemas(discoverRequest);
+
+            var request = new DiscoverRelatedEntitiesRequest
+            {
+                ToRelate = { discoverResponse.Schemas }
+            };
+
+            var response = client.DiscoverRelatedEntities(request);
+
+            // assert
+            Assert.IsType<DiscoverRelatedEntitiesResponse>(response);
+            
+            var entity = response.RelatedEntities[0];
+            Assert.Equal($"\"SAMPLE\".\"ACCOUNTS\"", entity.SchemaId);
+            Assert.Equal("\"SAMPLE\".\"ACCOUNTS\"", entity.SourceResource);
+            Assert.Equal("\"ACCOUNT_NUMBER\", \"ID\"", entity.SourceColumn);
+            Assert.Equal("\"SAMPLE\".\"USERS\"", entity.ForeignResource);
+            Assert.Equal("\"ID\", \"ACCOUNT_OWNER\"", entity.ForeignColumn);
+            Assert.Equal("MULTIPART FOREIGN KEY", entity.RelationshipName);
 
             // cleanup
             await channel.ShutdownAsync();

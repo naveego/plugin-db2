@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Aunalytics.Sdk.Plugins;
 using Google.Protobuf.Collections;
@@ -32,8 +33,8 @@ namespace PluginDb2.API.Discover
 FROM SYSIBM.SYSRELS SR
 WHERE
     SR.CREATOR = '{0}'
-AND SR.TBNAME = '{1}'
-ORDER BY SR.CREATOR AND SR.TBNAME";
+    AND SR.TBNAME = '{1}'
+ORDER BY SR.CREATOR, SR.TBNAME";
 
         private const string GetForeignKeysQuery_ISeries = @"SELECT
     PK.TABLE_SCHEMA AS SOURCE_TABLE_SCHEMA,
@@ -56,7 +57,8 @@ INNER JOIN QSYS2.SYSREFCST REF
 INNER JOIN QSYS2.SYSKEYCST PK
     ON PK.CONSTRAINT_SCHEMA = REF.UNIQUE_CONSTRAINT_SCHEMA
     AND PK.CONSTRAINT_NAME = REF.UNIQUE_CONSTRAINT_NAME
-WHERE CST.CONSTRAINT_TYPE = 'FOREIGN KEY'
+WHERE 
+    CST.CONSTRAINT_TYPE = 'FOREIGN KEY'
     AND FK.ORDINAL_POSITION = PK.ORDINAL_POSITION
     AND PK.TABLE_SCHEMA = '{0}'
     AND PK.TABLE_NAME = '{1}'
@@ -75,15 +77,17 @@ ORDER BY CST.CONSTRAINT_SCHEMA, CST.CONSTRAINT_NAME";
                 foreach (var schema in schemas)
                 {
                     string query;
-                    var schemaParts = schema.Id.Split('.');
-
+                    var schemaParts = DecomposeSafeName(schema.Id).TrimEscape();
+                    var schemaName = schemaParts.Schema;
+                    var tableName = schemaParts.Table;
+                    
                     switch (settings.Mode)
                     {
                         case Constants.ModeISeries:
                             query = string.Format(
                                 GetForeignKeysQuery_ISeries,
-                                schemaParts[0].Trim('"'),
-                                schemaParts[1].Trim('"')
+                                schemaName,
+                                tableName
                             );
                             break;
                         case Constants.ModeZOS:
@@ -91,8 +95,8 @@ ORDER BY CST.CONSTRAINT_SCHEMA, CST.CONSTRAINT_NAME";
                         default:
                             query = string.Format(
                                 GetForeignKeysQuery_LUW,
-                                schemaParts[0].Trim('"'),
-                                schemaParts[1].Trim('"')
+                                schemaName,
+                                tableName
                             );
                             break;
                     }
@@ -102,10 +106,10 @@ ORDER BY CST.CONSTRAINT_SCHEMA, CST.CONSTRAINT_NAME";
                     
                     while (await reader.ReadAsync())
                     {
-                        var sourceResourceId = $"{Utility.Utility.GetSafeName(reader.GetValueById(SourceTableSchema).ToString(), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(SourceTableName).ToString(), '"')}";
-                        var sourceResourceColumn = Utility.Utility.GetSafeName(reader.GetValueById(SourceColumn).ToString(), '"');
-                        var foreignResourceId = $"{Utility.Utility.GetSafeName(reader.GetValueById(ForeignTableSchema).ToString(), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(ForeignTableName).ToString(), '"')}";
-                        var foreignResourceColumn = Utility.Utility.GetSafeName(reader.GetValueById(ForeignColumn).ToString(), '"');
+                        var sourceResourceId = $"{Utility.Utility.GetSafeName(reader.GetValueById(SourceTableSchema).ToString()?.Trim(' '), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(SourceTableName).ToString()?.Trim(' '), '"')}";
+                        var sourceResourceColumn = Utility.Utility.GetSafeName(string.Join("\", \"", reader.GetValueById(SourceColumn).ToString()?.Trim(' ')?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>()), '"');
+                        var foreignResourceId = $"{Utility.Utility.GetSafeName(reader.GetValueById(ForeignTableSchema).ToString()?.Trim(' '), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(ForeignTableName).ToString()?.Trim(' '), '"')}";
+                        var foreignResourceColumn = Utility.Utility.GetSafeName(string.Join("\", \"", reader.GetValueById(ForeignColumn).ToString()?.Trim(' ')?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>()), '"');
                         var relationshipName = reader.GetValueById(RelationshipName).ToString();
 
                         var relatedEntity = new RelatedEntity
