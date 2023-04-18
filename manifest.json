@@ -100,7 +100,7 @@
           "title": "Discovery Libraries",
           "description": "Libraries to discover within, if none are provided all will be inspected.",
           "type": "array",
-          "minItems": 1,
+          "minItems": 0,
           "items": {
             "type": "string",
             "default": ""
