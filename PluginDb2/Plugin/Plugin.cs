@@ -72,8 +72,10 @@ namespace PluginDb2.Plugin
         public override async Task<ConnectResponse> Connect(ConnectRequest request, ServerCallContext context)
         {
             Logger.SetLogPrefix("connect");
+            Logger.Info("Connecting...");
 
             // validate settings passed in
+            Logger.Info("Validating settings");
             try
             {
                 _server.Settings = JsonConvert.DeserializeObject<Settings>(request.SettingsJson);
@@ -82,7 +84,7 @@ namespace PluginDb2.Plugin
             }
             catch (Exception e)
             {
-                Logger.Error(e, e.Message);
+                Logger.Error(e, e.Message, context);
                 return new ConnectResponse
                 {
                     OauthStateJson = request.OauthStateJson,
@@ -91,6 +93,8 @@ namespace PluginDb2.Plugin
                     SettingsError = e.Message
                 };
             }
+            
+            Logger.Info("Settings validated");
 
             // initialize connection factory
             try
@@ -99,7 +103,7 @@ namespace PluginDb2.Plugin
             }
             catch (Exception e)
             {
-                Logger.Error(e, e.Message);
+                Logger.Error(e, e.Message, context);
                 return new ConnectResponse
                 {
                     OauthStateJson = request.OauthStateJson,
@@ -108,6 +112,8 @@ namespace PluginDb2.Plugin
                     SettingsError = e.Message
                 };
             }
+            
+            Logger.Info("Testing connection");
 
             // test cluster factory
             var conn = _connectionFactory.GetConnection();
@@ -128,7 +134,7 @@ namespace PluginDb2.Plugin
             }
             catch (Exception e)
             {
-                Logger.Error(e, e.Message);
+                Logger.Error(e, e.Message, context);
 
                 return new ConnectResponse
                 {
@@ -142,8 +148,12 @@ namespace PluginDb2.Plugin
             {
                 await conn.CloseAsync();
             }
+            
+            Logger.Info("Connection validated");
 
             _server.Connected = true;
+            
+            Logger.Info("Connected");
 
             return new ConnectResponse
             {
