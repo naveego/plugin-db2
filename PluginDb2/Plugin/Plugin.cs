@@ -116,9 +116,10 @@ namespace PluginDb2.Plugin
             Logger.Info("Testing connection");
 
             // test cluster factory
-            var conn = _connectionFactory.GetConnection();
+            IConnection conn = null;
             try
             {
+                conn = _connectionFactory.GetConnection();
                 await conn.OpenAsync();
                 
                 if (!await conn.PingAsync())
@@ -146,7 +147,10 @@ namespace PluginDb2.Plugin
             }
             finally
             {
-                await conn.CloseAsync();
+                if (conn != null)
+                {
+                    await conn.CloseAsync();
+                }
             }
             
             Logger.Info("Connection validated");
