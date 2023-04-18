@@ -106,11 +106,11 @@ ORDER BY CST.CONSTRAINT_SCHEMA, CST.CONSTRAINT_NAME";
                     
                     while (await reader.ReadAsync())
                     {
-                        var sourceResourceId = $"{Utility.Utility.GetSafeName(reader.GetValueById(SourceTableSchema).ToString()?.Trim(' '), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(SourceTableName).ToString()?.Trim(' '), '"')}";
-                        var sourceResourceColumn = Utility.Utility.GetSafeName(string.Join("\", \"", reader.GetValueById(SourceColumn).ToString()?.Trim(' ')?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>()), '"');
-                        var foreignResourceId = $"{Utility.Utility.GetSafeName(reader.GetValueById(ForeignTableSchema).ToString()?.Trim(' '), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(ForeignTableName).ToString()?.Trim(' '), '"')}";
-                        var foreignResourceColumn = Utility.Utility.GetSafeName(string.Join("\", \"", reader.GetValueById(ForeignColumn).ToString()?.Trim(' ')?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>()), '"');
-                        var relationshipName = reader.GetValueById(RelationshipName).ToString();
+                        var sourceResourceId = $"{Utility.Utility.GetSafeName(reader.GetTrimmedStringById(SourceTableSchema), '"')}.{Utility.Utility.GetSafeName(reader.GetTrimmedStringById(SourceTableName), '"')}";
+                        var sourceResourceColumn = Utility.Utility.GetSafeName(string.Join("\", \"", reader.GetTrimmedStringById(SourceColumn)?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>()), '"');
+                        var foreignResourceId = $"{Utility.Utility.GetSafeName(reader.GetTrimmedStringById(ForeignTableSchema), '"')}.{Utility.Utility.GetSafeName(reader.GetTrimmedStringById(ForeignTableName), '"')}";
+                        var foreignResourceColumn = Utility.Utility.GetSafeName(string.Join("\", \"", reader.GetTrimmedStringById(ForeignColumn)?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>()), '"');
+                        var relationshipName = reader.GetTrimmedStringById(RelationshipName);
 
                         var relatedEntity = new RelatedEntity
                         {

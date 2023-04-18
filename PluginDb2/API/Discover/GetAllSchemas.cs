@@ -115,7 +115,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                 while (await reader.ReadAsync())
                 {
                     var schemaId =
-                        $"{Utility.Utility.GetSafeName(reader.GetValueById(TableSchema).ToString()?.Trim(' '), '"')}.{Utility.Utility.GetSafeName(reader.GetValueById(TableName).ToString()?.Trim(' '), '"')}";
+                        $"{Utility.Utility.GetSafeName(reader.GetTrimmedStringById(TableSchema), '"')}.{Utility.Utility.GetSafeName(reader.GetTrimmedStringById(TableName), '"')}";
                     if (schemaId != currentSchemaId)
                     {
                         // return previous schema
@@ -140,13 +140,13 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
                     // add column to schema
                     var property = new Property
                     {
-                        Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName)?.ToString()?.Trim(' ')),
-                        Name = reader.GetValueById(ColumnName)?.ToString()?.Trim(' '),
-                        IsKey = reader.GetValueById(ColumnKey)?.ToString() == "1",
-                        IsNullable = reader.GetValueById(IsNullable)?.ToString() == "Y",
-                        Type = GetType(reader.GetValueById(DataType)?.ToString()),
-                        TypeAtSource = GetTypeAtSource(reader.GetValueById(DataType)?.ToString(),
-                            reader.GetValueById(CharacterMaxLength))
+                        Id = Utility.Utility.GetSafeName(reader.GetTrimmedStringById(ColumnName)),
+                        Name = reader.GetTrimmedStringById(ColumnName),
+                        IsKey = reader.GetTrimmedStringById(ColumnKey) == "1",
+                        IsNullable = reader.GetTrimmedStringById(IsNullable) == "Y",
+                        Type = GetType(reader.GetTrimmedStringById(DataType)),
+                        TypeAtSource = GetTypeAtSource(reader.GetTrimmedStringById(DataType),
+                            reader.GetTrimmedStringById(CharacterMaxLength))
                     };
                     schema?.Properties.Add(property);
                 }
@@ -220,7 +220,7 @@ ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME";
             }
         }
 
-        private static string GetTypeAtSource(string dataType, object maxLength)
+        private static string GetTypeAtSource(string dataType, string maxLength)
         {
             return maxLength != null ? $"{dataType}({maxLength})" : dataType;
         }

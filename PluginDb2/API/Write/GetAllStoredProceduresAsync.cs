@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using PluginDb2.API.Factory;
+using PluginDb2.API.Utility;
 using PluginDb2.DataContracts;
 
 namespace PluginDb2.API.Write
@@ -34,9 +35,9 @@ select ""ROUTINESCHEMA"", ""ROUTINENAME"", ""SPECIFICNAME""
                 {
                     var storedProcedure = new WriteStoredProcedure
                     {
-                        SchemaName = reader.GetValueById(SchemaName).ToString(),
-                        RoutineName = reader.GetValueById(RoutineName).ToString(),
-                        SpecificName = reader.GetValueById(SpecificName).ToString()
+                        SchemaName = reader.GetTrimmedStringById(SchemaName),
+                        RoutineName = reader.GetTrimmedStringById(RoutineName),
+                        SpecificName = reader.GetTrimmedStringById(SpecificName)
                     };
                 
                     storedProcedures.Add(storedProcedure);
