@@ -8,16 +8,16 @@
     <Choose>
         <When Condition="$(RuntimeIdentifier) != ''">
             <ItemGroup>
-                <PackageReference Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="IBM.Data.DB2.Core" Version="3.1.0.400" />
-                <PackageReference Condition="$(RuntimeIdentifier.StartsWith('osx'))" Include="IBM.Data.DB2.Core-osx" Version="3.1.0.300" />
-                <PackageReference Condition="$(RuntimeIdentifier.StartsWith('linux'))" Include="IBM.Data.DB2.Core-lnx" Version="3.1.0.400" />
+                <PackageReference Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="IBM.Data.DB2.Core" Version="3.1.0.600" />
+                <PackageReference Condition="$(RuntimeIdentifier.StartsWith('osx'))" Include="IBM.Data.DB2.Core-osx" Version="3.1.0.500" />
+                <PackageReference Condition="$(RuntimeIdentifier.StartsWith('linux'))" Include="IBM.Data.DB2.Core-lnx" Version="3.1.0.500" />
             </ItemGroup>
         </When>
         <Otherwise>
             <ItemGroup>
-                <PackageReference Condition="$([MSBuild]::IsOSPlatform('Windows'))" Include="IBM.Data.DB2.Core" Version="3.1.0.400" />
-                <PackageReference Condition="$([MSBuild]::IsOSPlatform('OSX'))" Include="IBM.Data.DB2.Core-osx" Version="3.1.0.300" />
-                <PackageReference Condition="$([MSBuild]::IsOSPlatform('Linux'))" Include="IBM.Data.DB2.Core-lnx" Version="3.1.0.400" />
+                <PackageReference Condition="$([MSBuild]::IsOSPlatform('Windows'))" Include="IBM.Data.DB2.Core" Version="3.1.0.600" />
+                <PackageReference Condition="$([MSBuild]::IsOSPlatform('OSX'))" Include="IBM.Data.DB2.Core-osx" Version="3.1.0.500" />
+                <PackageReference Condition="$([MSBuild]::IsOSPlatform('Linux'))" Include="IBM.Data.DB2.Core-lnx" Version="3.1.0.500" />
             </ItemGroup>
         </Otherwise>
     </Choose>
