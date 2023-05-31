@@ -1,7 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using PluginDb2.API.Factory;
+using PluginDb2.API.Utility;
 
 namespace PluginDb2.API.Discover
 {
@@ -26,7 +27,7 @@ namespace PluginDb2.API.Discover
                 var count = -1;
                 while (await reader.ReadAsync())
                 {
-                    count = Convert.ToInt32(reader.GetValueById("count"));
+                    count = Convert.ToInt32(reader.GetTrimmedStringById("count"));
                 }
 
                 return count == -1

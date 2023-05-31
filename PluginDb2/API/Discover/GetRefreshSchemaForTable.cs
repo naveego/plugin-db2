@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using PluginDb2.API.Factory;
+using PluginDb2.API.Utility;
 
 namespace PluginDb2.API.Discover
 {
@@ -45,13 +46,13 @@ WHERE t.TYPE = 'T' and t.CREATOR = '{0}' and t.NAME = '{1}'";
                     // add column to refreshProperties
                     var property = new Property
                     {
-                        Id = Utility.Utility.GetSafeName(reader.GetValueById(ColumnName).ToString(), '"'),
-                        Name = reader.GetValueById(ColumnName).ToString(),
-                        IsKey = reader.GetValueById(ColumnKey).ToString() == "1",
-                        IsNullable = reader.GetValueById(IsNullable).ToString() == "Y",
-                        Type = GetType(reader.GetValueById(DataType).ToString()),
-                        TypeAtSource = GetTypeAtSource(reader.GetValueById(DataType).ToString(),
-                            reader.GetValueById(CharacterMaxLength))
+                        Id = Utility.Utility.GetSafeName(reader.GetTrimmedStringById(ColumnName), '"'),
+                        Name = reader.GetTrimmedStringById(ColumnName),
+                        IsKey = reader.GetTrimmedStringById(ColumnKey) == "1",
+                        IsNullable = reader.GetTrimmedStringById(IsNullable) == "Y",
+                        Type = GetType(reader.GetTrimmedStringById(DataType)),
+                        TypeAtSource = GetTypeAtSource(reader.GetTrimmedStringById(DataType),
+                            reader.GetTrimmedStringById(CharacterMaxLength))
                     };
                     refreshProperties.Add(property);
                 }

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Grpc.Core;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using Newtonsoft.Json;
 using PluginDb2.API.Discover;
 using PluginDb2.API.Factory;
@@ -72,8 +72,10 @@ namespace PluginDb2.Plugin
         public override async Task<ConnectResponse> Connect(ConnectRequest request, ServerCallContext context)
         {
             Logger.SetLogPrefix("connect");
+            Logger.Info("Connecting...");
 
             // validate settings passed in
+            Logger.Info("Validating settings");
             try
             {
                 _server.Settings = JsonConvert.DeserializeObject<Settings>(request.SettingsJson);
@@ -82,7 +84,7 @@ namespace PluginDb2.Plugin
             }
             catch (Exception e)
             {
-                Logger.Error(e, e.Message);
+                Logger.Error(e, e.Message, context);
                 return new ConnectResponse
                 {
                     OauthStateJson = request.OauthStateJson,
@@ -91,6 +93,8 @@ namespace PluginDb2.Plugin
                     SettingsError = e.Message
                 };
             }
+            
+            Logger.Info("Settings validated");
 
             // initialize connection factory
             try
@@ -99,7 +103,7 @@ namespace PluginDb2.Plugin
             }
             catch (Exception e)
             {
-                Logger.Error(e, e.Message);
+                Logger.Error(e, e.Message, context);
                 return new ConnectResponse
                 {
                     OauthStateJson = request.OauthStateJson,
@@ -108,11 +112,14 @@ namespace PluginDb2.Plugin
                     SettingsError = e.Message
                 };
             }
+            
+            Logger.Info("Testing connection");
 
             // test cluster factory
-            var conn = _connectionFactory.GetConnection();
+            IConnection conn = null;
             try
             {
+                conn = _connectionFactory.GetConnection();
                 await conn.OpenAsync();
                 
                 if (!await conn.PingAsync())
@@ -128,7 +135,7 @@ namespace PluginDb2.Plugin
             }
             catch (Exception e)
             {
-                Logger.Error(e, e.Message);
+                Logger.Error(e, e.Message, context);
 
                 return new ConnectResponse
                 {
@@ -140,10 +147,17 @@ namespace PluginDb2.Plugin
             }
             finally
             {
-                await conn.CloseAsync();
+                if (conn != null)
+                {
+                    await conn.CloseAsync();
+                }
             }
+            
+            Logger.Info("Connection validated");
 
             _server.Connected = true;
+            
+            Logger.Info("Connected");
 
             return new ConnectResponse
             {
@@ -237,6 +251,40 @@ namespace PluginDb2.Plugin
             {
                 Logger.Error(e, e.Message, context);
                 return new DiscoverSchemasResponse();
+            }
+        }
+
+        /// <summary>
+        /// Discovers related entities to input schemas
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override async Task<DiscoverRelatedEntitiesResponse> DiscoverRelatedEntities(DiscoverRelatedEntitiesRequest request, ServerCallContext context)
+        {
+            Logger.SetLogPrefix("discover-related");
+            Logger.Info("Discovering Related Entities...");
+
+            var inputSchemas = request.ToRelate;
+
+            var discoverRelatedEntitiesResponse = new DiscoverRelatedEntitiesResponse();
+            
+            try
+            {
+                Logger.Info($"Related entity schemas attempted: {inputSchemas.Count}");
+
+                var relatedEntities = Discover.GetAllRelatedEntities(_connectionFactory, _server.Settings, inputSchemas);
+
+                discoverRelatedEntitiesResponse.RelatedEntities.AddRange(await relatedEntities.ToListAsync());
+
+                // return all related entities 
+                Logger.Info($"Related entities returned: {discoverRelatedEntitiesResponse.RelatedEntities.Count}");
+                return discoverRelatedEntitiesResponse;
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, e.Message, context);
+                return new DiscoverRelatedEntitiesResponse();
             }
         }
 

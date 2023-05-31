@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using PluginDb2.DataContracts;
 
 namespace PluginDb2.API.Replication

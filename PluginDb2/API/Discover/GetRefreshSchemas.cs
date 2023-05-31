@@ -4,7 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Google.Protobuf.Collections;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using PluginDb2.API.Factory;
 
 namespace PluginDb2.API.Discover

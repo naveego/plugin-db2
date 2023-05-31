@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using PluginDb2.API.Factory;
+using PluginDb2.API.Utility;
 using PluginDb2.DataContracts;
 
 namespace PluginDb2.API.Write
@@ -47,11 +48,11 @@ where proc.""ROUTINESCHEMA"" = '{0}'
                 {
                     var property = new Property
                     {
-                        Id = reader.GetValueById(ParamName).ToString(),
-                        Name = reader.GetValueById(ParamName).ToString(),
+                        Id = reader.GetTrimmedStringById(ParamName),
+                        Name = reader.GetTrimmedStringById(ParamName),
                         Description = "",
-                        Type = Discover.Discover.GetType(reader.GetValueById(DataType).ToString()),
-                        TypeAtSource = reader.GetValueById(DataType).ToString()
+                        Type = Discover.Discover.GetType(reader.GetTrimmedStringById(DataType)),
+                        TypeAtSource = reader.GetTrimmedStringById(DataType)
                     };
 
                     schema.Properties.Add(property);

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using Xunit;
 
 namespace PluginDb2.Helper

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Naveego.Sdk.Plugins;
+using Aunalytics.Sdk.Plugins;
 using Newtonsoft.Json;
 using PluginDb2.API.Factory;
 using PluginDb2.Helper;
