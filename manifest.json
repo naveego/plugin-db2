@@ -41,7 +41,8 @@
         "Password",
         "Mode",
         "DisableDiscovery",
-        "DiscoveryLibraries"
+        "DiscoveryLibraries",
+        "AppendConnectionString"
       ],
       "Password": {
         "ui:widget": "password"
@@ -50,7 +51,7 @@
     "schema": {
       "type": "object",
       "properties": {
-        "Server" : {
+        "Server": {
           "type": "string",
           "title": "Server",
           "description": "The Server hostname or IP of the DB2 Server"
@@ -80,21 +81,14 @@
           "title": "Mode",
           "description": "The DB2 mode the target system is running",
           "default": "LUW",
-          "enum": [
-            "LUW",
-            "iSeries",
-            "zOS"
-          ]
+          "enum": ["LUW", "iSeries", "zOS"]
         },
         "DisableDiscovery": {
           "type": "boolean",
           "title": "Disable Discovery",
           "description": "Disable automatic discovery",
           "default": false,
-          "examples": [
-            true,
-            false
-          ]
+          "examples": [true, false]
         },
         "DiscoveryLibraries": {
           "title": "Discovery Libraries",
@@ -105,6 +99,11 @@
             "type": "string",
             "default": ""
           }
+        },
+        "AppendConnectionString": {
+          "type": "string",
+          "title": "Append Connection String",
+          "description": "Value to be appended to the end of the connection string"
         }
       },
       "required": [
